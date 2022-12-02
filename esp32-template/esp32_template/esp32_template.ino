@@ -38,6 +38,7 @@ private:
     html5_c     _graph;
     int         _fivemin = 0;
     bool        _firstloop = false;
+    uint32_t    _last_read = 0;
     struct humi_str_t
     {
         int   tlimit    =  40;
@@ -82,19 +83,22 @@ void  my_esp_c::user_begin()
 void  my_esp_c::user_loop(unsigned int loop)
 {
     static int test = 500;
-    if(_seconds % 10 == 0 || _firstloop==false)
+    if(millis() - _last_read > 10000 || _firstloop==false)
     {
+        _last_read = millis();
         _senz.loop(_htp);
-        if(_htp.hum>0 && _htp.hum_l>0)
+        if(_htp.hum>0 && _htp.hum_l>0 && _user.active)
         {
-            if(_htp.temp!=0 && _htp.temp_l>0)
+            if(_htp.temp!=0 && _htp.hum_l>0)
             {
                 if(_htp.temp > _htp.temp_l+1 && _htp.hum < _htp.hum_l-1 )
                 {
+                    Serial.print("RELAY ON");
                     relay_on();
                 }
-                else if(_htp.temp < _htp.temp_l-11 || _htp.hum > _htp.hum_l+1)
+                else if(_htp.temp < _htp.temp_l-1 || _htp.hum > _htp.hum_l+1)
                 {
+                    Serial.print("RELAY OFF");
                     relay_off();
                 }
             }
@@ -102,6 +106,10 @@ void  my_esp_c::user_loop(unsigned int loop)
     }
     if(_seconds % 60 == 0|| _firstloop==false)
     {
+        pinMode(RELAY, OUTPUT);
+        pinMode(LED, OUTPUT);
+        digitalWrite(RELAY, __Ramm.relay_state);
+
         _senz.loop(_htp);
         _graph.loop(_htp,_seconds/60);
     }
@@ -168,11 +176,11 @@ void  my_esp_c::page_request(ESP8266WebServer* srv, String& page)
         _esp_srv->arg("ri").toCharArray(ri,14);
         _esp_srv->arg("ac").toCharArray(ri,14);
 
-        _user.tlimit =     _htp.temp_l  = atoi(tt);
-        _user.hlimit =     _htp.hum_l   = atoi(ht);
-        _user.presslimit = _htp.pres_l  = atoi(pt);
-        _user.relayinverse              = atoi(ri);
-        _user.active                    = atoi(ac);
+        if(tt[0]) _user.tlimit =     _htp.temp_l  = atoi(tt);
+        if(ht[0]) _user.hlimit =     _htp.hum_l   = atoi(ht);
+        if(pt[0]) _user.presslimit = _htp.pres_l  = atoi(pt);
+        if(ri[0]) _user.relayinverse              = atoi(ri);
+        if(ac[0]) _user.active                    = atoi(ac);
         _user.sig = USER_SIG;
         this->save_data(_user);
         page+= _start_html();

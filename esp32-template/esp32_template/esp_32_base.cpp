@@ -42,9 +42,9 @@ bool    esp_32_base_c::setup()
     Serial.println(" @ http://10.5.5.1");
     Serial.flush();
 
-    if(RELAY)pinMode(RELAY, OUTPUT);
-    if(LED)pinMode(LED, OUTPUT);
-    if (RELAY)digitalWrite(RELAY, __Ramm.relay_state);
+    pinMode(RELAY, OUTPUT);
+    pinMode(LED, OUTPUT);
+    digitalWrite(RELAY, __Ramm.relay_state);
 
 
     WiFi.softAPConfig(*_ip_addr, *_ip_addr, *_net_mask);
@@ -369,8 +369,8 @@ const __FlashStringHelper * esp_32_base_c::_start_html(bool content)
                  "table, th, td { border: 1px solid; width:100%;}"
                  ".menu{text-align:center; fint-size:1.5em; color:#522; "
                  "background-color: #c0c0e0; position:fixed; top:0; width:100%; z-index:100;}"
-                 "button,input[type='submit']{background-color:#AAF;color:black;width:160px;height:40px;}"
-                 "input[type='file']{background-color:#AAF;color:black;width:160px;height:40px;display=none;}"
+                 "button,input[type='submit'],.but{background-color:#AAF;color:black;width:160px;height:40px;}"
+                 "input[type='file']{background-color:#AAF;color:black;width:160px;height:40px;display:none}"
                  "</style>\n"
                  "<title>HUMIDIFIER</title></head>\n<body>\n"
                  "<div class='menu'>"
@@ -391,7 +391,7 @@ void esp_32_base_c::handleOta()
     page += "<form method='POST' "
             "action='/fileup' enctype='multipart/form-data' id='upload_form'>"
             "<input type='file' name='update'>"
-            "<input type='submit' value='Update'>"
+            "<input type='submit' class='but' value='Update'>"
             "</form>";
 
     page+=This->_end_html();
