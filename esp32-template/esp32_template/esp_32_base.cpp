@@ -369,8 +369,9 @@ const __FlashStringHelper * esp_32_base_c::_start_html(bool content)
                  "table, th, td { border: 1px solid; width:100%;}"
                  ".menu{text-align:center; fint-size:1.5em; color:#522; "
                  "background-color: #c0c0e0; position:fixed; top:0; width:100%; z-index:100;}"
-                 "button,input[type='submit'],.but{background-color:#AAF;color:black;width:160px;height:40px;}"
-                 "input[type='file']{background-color:#AAF;color:black;width:160px;height:40px;display:none}"
+                 "button,input[type='submit']{background-color:#8EF;color:black;width:160px;height:40px;}"
+                 ".but{background-color:#8EF;color:black;width:160px;height:40px;}"
+                 "input[type='file']{background-color:#8EF;color:black;width:160px;height:40px;display:none}"
                  "</style>\n"
                  "<title>HUMIDIFIER</title></head>\n<body>\n"
                  "<div class='menu'>"
@@ -390,8 +391,8 @@ void esp_32_base_c::handleOta()
     String page = This->_start_html();
     page += "<form method='POST' "
             "action='/fileup' enctype='multipart/form-data' id='upload_form'>"
-            "<input type='file' name='update'>"
-            "<input type='submit' class='but' value='Update'>"
+            "<input type='file' class='but' name='update'>"
+            "<input type='submit'  value='Update'>"
             "</form>";
 
     page+=This->_end_html();
