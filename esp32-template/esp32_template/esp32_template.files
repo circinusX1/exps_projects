@@ -1,3 +1,4 @@
+../../../../../BOARDS/ESP/Esp8266-Arduino-Makefile/espXArduino.mk
 Makefile
 _config.h
 arduino_ota.cpp
@@ -8,6 +9,8 @@ flash.sh
 html5_c.cpp
 html5_c.h
 i2c_senz.h
+libraries/AHT10/src/AHT10.cpp
+libraries/AHT10/src/AHT10.h
 libraries/Adafruit_BMP085_U/src/Adafruit_BMP085_U.cpp
 libraries/Adafruit_BMP085_U/src/Adafruit_BMP085_U.h
 libraries/Adafruit_BMP085_U/src/library.properties

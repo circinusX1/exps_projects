@@ -1,0 +1,5 @@
+*.o
+esp_small_door/build.*
+build.*
+*build.*
+

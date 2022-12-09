@@ -6,6 +6,13 @@
 #if WITH_SHT21
 #   include "SHT2x.h"        // comment out if you dont have it
 #endif
+#if WITH_ATH10
+#include "AHT10.h"
+#endif
+
+#include "esp_32_base.h"
+
+extern RAMM __Ramm;
 
 #if WITH_BMP085
 #   include "Adafruit_BMP085_U.h" // __BMP085_H__
@@ -17,6 +24,7 @@ struct thp_str_t
     float temp;
     float hum;
     float pres;
+    uint8_t relay;
     float temp_l = 40;
     float hum_l  = 38;
     float pres_l = 1000;
@@ -35,13 +43,10 @@ public:
 
     void begin(int sda=I2C_SDA, int scl=I2C_SCL)
     {
-        Serial.println("i2c_senz_c BEGIN");
-        if(I2C_SDA == 1)
-        {
-            Serial.flush();
-            Serial.end();
-        }
+        Serial.println("Wire BEGIN");
+
         Wire.begin(sda,scl);
+        Serial.println("Scanning Wire began");
         bool ret = scan();
         if(ret)
         {
@@ -65,12 +70,34 @@ public:
                 delete _bmp;  _bmp = nullptr;
             }
 #endif
-        }
-        if(I2C_SDA == 1)
-        {
-            Serial.begin(SERIAL_BOS);
+#if WITH_ATH10
+            Serial.println("Starting WITH_ATH");
+            _ath =  new AHT10(AHT10_ADDRESS_0X38);
+            int max = 30;
+
+            while (max-- && _ath->begin(sda,scl) != true)
+            {
+                delay(1000);
+                Serial.print(".");
+                Serial.flush();
+                ESP.wdtFeed();
+            }
+            if(max<=0){
+                __Ramm.fail=1;
+                Serial.print("ATH failed ");
+                REBOOT();
+            }
+            __Ramm.fail=1;
+            _ath->softReset();
+
+            Serial.print("WITH_ATH Okay: TH=");
+            Serial.println(max);
+            Serial.print("T:"); Serial.println(_ath->readTemperature());
+            Serial.print("H:"); Serial.println(_ath->readHumidity());
+#endif
         }
         Serial.println("Scan Ended");
+        __Ramm.fail=0;
     }
     //////////////////////////////////////////////////////////////////////////////////
     bool scan()
@@ -80,17 +107,24 @@ public:
         Serial.println("Scanning");
         for(address = 1; address < 127; address++ )
         {
+            Serial.print(int(address));
+            Serial.print(" ");
+            Serial.flush();
+            if(address%32==0)
+                Serial.println("");
+
             Wire.beginTransmission(address);
             delay(8);
             error = Wire.endTransmission();
             if (error == 0)
             {
-                Serial.print("I2C device: 0X");
-                Serial.println(address);
+                Serial.println("I2C device: 0x");
+                Serial.print(address, HEX);
+                Serial.println("");
                 ret = true;
             }
         }
-        Serial.println("scaning Done");
+        Serial.println("Scaning Done");
         return ret;
     }
 
@@ -98,11 +132,6 @@ public:
     void loop(thp_str_t& htp)
     {
 
-        if(I2C_SDA == 1) // shared with UART on ESPS-01
-        {
-            Serial.flush();
-            Serial.end();
-        }
 
 #if WITH_SHT21
         if(_sht)
@@ -142,11 +171,10 @@ public:
 
 #endif
 
-        if(I2C_SDA == 1)
-        {
-
-            Serial.begin(SERIAL_BOS);
-        }
+#if WITH_ATH10
+        htp.temp = _ath->readTemperature();
+        htp.hum = _ath->readHumidity();
+#endif
 
     }
 
@@ -157,6 +185,10 @@ private:
 #endif
 #if WITH_SHT21
     SHT2x*                  _sht = nullptr;
+#endif
+
+#if WITH_ATH10
+    AHT10*                  _ath = nullptr;
 #endif
     String                 _i2cs;
     bool                   _hasdev=false;

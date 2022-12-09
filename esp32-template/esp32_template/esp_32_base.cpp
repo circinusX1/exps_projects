@@ -58,6 +58,7 @@ bool    esp_32_base_c::setup()
     ESP_S()->on("/index.html", esp_32_base_c::handleRoot);
     ESP_S()->on("/wifi", esp_32_base_c::handleWifi);
     ESP_S()->on("/ota", esp_32_base_c::handleOta);
+    ESP_S()->on("/time", esp_32_base_c::handleTime);
     ESP_S()->on("/wifisave", esp_32_base_c::handleWifiSave);
     ESP_S()->on("/generate_204", esp_32_base_c::handleRoot);   //  Android captive portal. Maybe not needed. Might be handled by notFound handler.
     ESP_S()->on("/fwlink", esp_32_base_c::handleRoot);
@@ -108,7 +109,8 @@ bool    esp_32_base_c::setup()
 #if WITH_NTP
     if(_eprom._offset[0])
     {
-        _timeClient =  new NTPClient(_ntpUDP,::atoi(_eprom._offset)*3600);
+        _timezone = ::atoi(_eprom._offset);
+        _timeClient =  new NTPClient(_ntpUDP,_timezone*3600);
         _timeClient->begin();
     }
 #endif
@@ -211,8 +213,10 @@ bool    esp_32_base_c::loop()
 
     //_dns_srv->processNextRequest();
     ESP_S()->handleClient();
-    this->user_loop(_loop);
-
+    if(__Ramm.fail==0)
+    {
+        this->user_loop(_loop);
+    }
 
     if(millis() - _blinktime > _blink_rate && _blink_rate)
     {
@@ -348,9 +352,20 @@ boolean esp_32_base_c::_captivePortal()
     return false;
 }
 
-const __FlashStringHelper * esp_32_base_c::_end_html()
+const String esp_32_base_c::_end_html()
 {
     return F("</div></body></html>");
+/*
+    String ends = "</div>\n"
+                  "<script> const seconds = new Date().getTime() / 1000;\n"
+    "let options = {\n"
+    "  method: 'GET',\n"
+    "  headers: {}\n"
+    "};\n"
+    "fetch('/time?time=seconds', options);\n"
+    "</script></body></html>";
+    return ends;
+*/
 }
 
 const __FlashStringHelper * esp_32_base_c::_start_html(bool content)
@@ -370,8 +385,8 @@ const __FlashStringHelper * esp_32_base_c::_start_html(bool content)
                  ".menu{text-align:center; fint-size:1.5em; color:#522; "
                  "background-color: #c0c0e0; position:fixed; top:0; width:100%; z-index:100;}"
                  "button,input[type='submit']{background-color:#8EF;color:black;width:160px;height:40px;}"
-                 ".but{background-color:#8EF;color:black;width:160px;height:40px;}"
-                 "input[type='file']{background-color:#8EF;color:black;width:160px;height:40px;display:none}"
+                 ".but{dislay:inline-flex;padding-top:9px;background-color:#8EF;color:black;width:160px;height:28px;}"
+                 "input[type='file']{background-color:#8EF;color:black;width:160px;height:60px;display:none}"
                  "</style>\n"
                  "<title>HUMIDIFIER</title></head>\n<body>\n"
                  "<div class='menu'>"
@@ -384,17 +399,35 @@ const __FlashStringHelper * esp_32_base_c::_start_html(bool content)
     }
     return F("");
 }
+
+void esp_32_base_c::handleTime()
+{
+    char timp[16] = {0};
+    ESP_S()->arg("time").toCharArray(timp,14);
+    This->_seconds = ::atoi(timp);
+
+}
+
 void esp_32_base_c::handleOta()
 {
     TRACE();
     This->_otaenabled = true;
     String page = This->_start_html();
-    page += "<form method='POST' "
+    page += "<div id='msg'></div><form method='POST' id='form' name='form' "
             "action='/fileup' enctype='multipart/form-data' id='upload_form'>"
-            "<input type='file' class='but' name='update'>"
+            "<label class='but'><input type='file' name='update'>Select bin</label>"
             "<input type='submit'  value='Update'>"
-            "</form>";
-
+            "</form>"
+            "<script>\n"
+            "function redir() {\n"
+            "   window.location.href = '/';\n"
+            "}\n"
+            "function ls(event) {\n"
+            "    setTimeout(redir, 20000) ;\n"
+            "}\n"
+            "const form = document.getElementById('form');\n"
+            "form.addEventListener('submit', ls);\n"
+            "</script>\n";
     page+=This->_end_html();
     ESP_S()->send(200, "text/html", page);
 }

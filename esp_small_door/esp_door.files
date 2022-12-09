@@ -1,0 +1,6 @@
+../../../BOARDS/ESP/Esp8266-Arduino-Makefile/espXArduino.mk
+../Esp8266-Arduino-Makefile/espXArduino.mk
+Makefile
+esp32_full.cpp
+esp32_full.h
+esp_small_door.ino

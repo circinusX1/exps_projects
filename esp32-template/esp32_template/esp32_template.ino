@@ -4,7 +4,7 @@
 #include <Wire.h>
 
 #define USER_SIG    0x13
-
+#define RAMSIG      0x20
 
 class my_esp_c : public esp_32_base_c
 {
@@ -18,14 +18,14 @@ public:
 public:
     void relay_on()
     {
-        digitalWrite(RELAY, _user.relayinverse ? HIGH :LOW);
+        digitalWrite(RELAY, _user.relayinverse ?  LOW : HIGH);
         __Ramm.relay_state = 1;
 
     }
 
     void relay_off()
     {
-        digitalWrite(RELAY, _user.relayinverse ? LOW : HIGH);
+        digitalWrite(RELAY, _user.relayinverse ? HIGH:  LOW);
         __Ramm.relay_state = 0;
     }
 
@@ -33,12 +33,19 @@ private:
     String      _page;
     int         _lop = 0;
     bool        _out = false;
+#if HAS_I2C
     i2c_senz_c  _senz;
+#endif
     thp_str_t   _htp;
+#if WITH_GRAPH
     html5_c     _graph;
+#endif
+
     int         _fivemin = 0;
     bool        _firstloop = false;
     uint32_t    _last_read = 0;
+    uint32_t    _checked = 0;
+    int         _test = 0;
     struct humi_str_t
     {
         int   tlimit    =  40;
@@ -55,9 +62,20 @@ my_esp_c esp;
 
 void  my_esp_c::user_begin()
 {
-    _senz.begin();
+    Serial.print("ram failed:"); Serial.println(__Ramm.fail);
+    if(__Ramm.fail==0)
+    {
+        Serial.print("ram failed:"); Serial.println(__Ramm.fail);
+        __Ramm.fail = 1;
+#if HAS_I2C
+        _senz.begin();
+#endif
+        __Ramm.fail = 0;
+        Serial.print("ram failed:"); Serial.println(__Ramm.fail);
+    }
+#if WITH_GRAPH
     _graph.begin(800,400);
-
+#endif
     this->load_data(_user);
     if(_user.sig==USER_SIG)
     {
@@ -78,103 +96,112 @@ void  my_esp_c::user_begin()
     }else{
         relay_off();
     }
+    __Ramm.fail = 0;
+    Serial.print("ram failed:"); Serial.println(__Ramm.fail);
 }
 
 void  my_esp_c::user_loop(unsigned int loop)
 {
     static int test = 500;
-    if(millis() - _last_read > 10000 || _firstloop==false)
+    if(_firstloop==false)
+    {
+        pinMode(RELAY, OUTPUT);
+        pinMode(LED, OUTPUT);
+        digitalWrite(RELAY, __Ramm.relay_state);
+    }
+    if(millis() - _last_read > 5000 || _firstloop==false)
     {
         _last_read = millis();
-        _senz.loop(_htp);
+        if(__Ramm.fail==0)
+        {
+#if HAS_I2C
+            _senz.loop(_htp);
+#endif
+        }
+#if HAS_I2C
         if(_htp.hum>0 && _htp.hum_l>0 && _user.active)
         {
             if(_htp.temp!=0 && _htp.hum_l>0)
             {
                 if(_htp.temp > _htp.temp_l+1 && _htp.hum < _htp.hum_l-1 )
                 {
-                    Serial.print("RELAY ON");
+                    Serial.println("RELAY ON");
                     relay_on();
+                    _htp.relay = 1;
                 }
                 else if(_htp.temp < _htp.temp_l-1 || _htp.hum > _htp.hum_l+1)
                 {
-                    Serial.print("RELAY OFF");
+                    Serial.println("RELAY OFF");
                     relay_off();
+                    _htp.relay = 0;
                 }
             }
         }
+#endif
     }
-    if(_seconds % 60 == 0|| _firstloop==false)
+    if((_seconds % 60 == 0 || _firstloop==false))
     {
-        pinMode(RELAY, OUTPUT);
-        pinMode(LED, OUTPUT);
-        digitalWrite(RELAY, __Ramm.relay_state);
-
-        _senz.loop(_htp);
+#if WITH_GRAPH
         _graph.loop(_htp,_seconds/60);
+#endif
     }
     _firstloop=true;
 }
 
 void  my_esp_c::page_request(ESP8266WebServer* srv, String& page)
 {
+    if(srv->hasArg("sda") && srv->hasArg("scl"))
+    {
+#if HAS_I2C
+        i2c_senz_c  s;
+        char sda[8] = {0};
+        char scl[8] = {0};
+
+        _esp_srv->arg("sda").toCharArray(sda,7);
+        _esp_srv->arg("scl").toCharArray(scl,7);
+        int isda = ::atoi(sda);
+        int iscl = ::atoi(scl);
+        s.begin(isda,iscl);
+#endif
+
+    }
+#if WITH_GRAPH
     if(srv->hasArg("fetch"))
     {
         page=_start_html(false);
         int has=0;
+        int timeo = _seconds/300;
         for(int i=0;i<DAY_OF5-1;i++)
         {
             if(_graph._samples[i].temp!=0.0f)   has|=0x1;
             if(_graph._samples[i].hum>0.1f)     has|=0x2;
             if(_graph._samples[i].pres>0.1f)    has|=0x4;
         }
-        if(has&0x1)
-        {
-            for(int i=0;i<DAY_OF5-1;i++)
-            {
-                page += String(_graph._samples[i].temp);
-                page += ",";
-            }
-        }
-        page += String(":");
-        if(has&=0x2)
-        {
-            for(int i=0;i<DAY_OF5-1;i++)
-            {
-                page += String(_graph._samples[i].hum);
-                page += ",";
-            }
-        }
-        page += String(":");
-        if(has&=0x4)
-        {
-            for(int i=0;i<DAY_OF5-1;i++)
-            {
-                page += String(_graph._samples[i].pres);
-                page += ",";
-            }
-        }
-        page += String(":");
-        page += String(_seconds/(60*5)); // minute*5 in day
+        page += String(int(_htp.temp))+":";
+        page += String(int(_htp.hum))+":";
+        page += String(int(_htp.pres))+":";
+        page += String(int(_htp.relay))+":";
+        page += String(timeo); // minute*5 in day
         return;
     }
+#endif
     if(srv->hasArg("reboot"))
     {
         REBOOT();
     }
     if(srv->hasArg("usersave"))
     {
-        char tt[16] = {0};
-        char ht[16] = {0};
-        char pt[16] = {0};
-        char ri[16] = {0};
-        char ac[16] = {0};
+        char tt[8] = {0};
+        char ht[8] = {0};
+        char pt[8] = {0};
+        char ri[8] = {0};
+        char ac[8] = {0};
 
-        _esp_srv->arg("tt").toCharArray(tt,14);
-        _esp_srv->arg("th").toCharArray(ht,14);
-        _esp_srv->arg("tp").toCharArray(pt,14);
-        _esp_srv->arg("ri").toCharArray(ri,14);
-        _esp_srv->arg("ac").toCharArray(ri,14);
+        _esp_srv->arg("tt").toCharArray(tt,6);
+        _esp_srv->arg("th").toCharArray(ht,6);
+        _esp_srv->arg("tp").toCharArray(pt,6);
+        _esp_srv->arg("ri").toCharArray(ri,6);
+        _esp_srv->arg("ac").toCharArray(ac,6);
 
         if(tt[0]) _user.tlimit =     _htp.temp_l  = atoi(tt);
         if(ht[0]) _user.hlimit =     _htp.hum_l   = atoi(ht);
@@ -202,7 +229,7 @@ void  my_esp_c::page_request(ESP8266WebServer* srv, String& page)
             relay_on();
         }
         if(srv->arg("relay")=="0"){
-           relay_off();
+            relay_off();
         }
     }
     if(srv->hasArg("gpio"))
@@ -224,6 +251,7 @@ void  my_esp_c::page_request(ESP8266WebServer* srv, String& page)
     page +=  F("<li>Hum: ");    page += String(_htp.hum);  page += F(" / "); page += String(_htp.hum_l);
     page +=  F("<li>Press: ");  page += String(_htp.pres); page += F(" / "); page += String(_htp.pres_l);
     page +=  F("<li>Secs: ");   page += String(_seconds);
+    page +=  F("<li>Tzone: ");  page += String(_timezone);
     page += F("  [")+String(_seconds/3600);
     page += F(":")+String((_seconds/60)%60);
     page += F(":")+String(_seconds%60);
@@ -236,21 +264,41 @@ void  my_esp_c::page_request(ESP8266WebServer* srv, String& page)
         page += "<li> RELAY  ON";
 
     page +=  F("</td><td>"
-    "<form method='POST' action='?usersave'>"
-    "<input type='text' placeholder='Trigger Temp (1-99)' name='tt'/>"
-    "<br /><input type='text' placeholder='Trigger Hum (1-99)' name='th'/>"
-    "<br /><input type='text' placeholder='Trigger Pressure (1-1200)' name='tp'/>"
-    "<br /><input type='text' placeholder='Relay Inverse (0/1)' name='ri'/>"
-    "<br /><input type='text' placeholder='Active On HT (0/1)' name='ac'/>"
-    "<br /><input type='submit' value='Apply'/></form>");
+               "<form method='POST' action='?usersave'>"
+               "<input type='text' placeholder='Trigger Over Temp (1-99)' name='tt'/>"
+               "<br /><input type='text' placeholder='Trigger Under Hum (1-99)' name='th'/>"
+               "<br /><input type='text' placeholder='Trigger Pressure (1-1100)' name='tp'/>"
+               "<br /><input type='text' placeholder='Relay Inverse (1-reverse relay/0-normal)' name='ri'/>"
+               "<br /><input type='text' placeholder='Disable automation (0-disable/1-enable)' name='ac'/>"
+               "<br /><input type='submit' value='Apply'/></form>");
 
     page +=  F("</tr></table>");
     page+="</font>";
+#if WITH_GRAPH
+
     _graph.page(page);
+#endif
     page +=  _end_html();
 }
 
 void setup() {
+    if(__Ramm.sig != RAMSIG) // cold boot
+    {
+        Serial.begin(115200);
+        __Ramm.fail = 0;
+        __Ramm.relay_state = 0;
+        __Ramm.sig = RAMSIG;
+        Serial.println("init ram");
+        Serial.flush();
+        Serial.end();
+    }
+    else
+    {
+        Serial.begin(115200);
+        Serial.println("hot boot");
+        Serial.flush();
+        Serial.end();
+    }
     esp.setup();
 }
 void loop() {

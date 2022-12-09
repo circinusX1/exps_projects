@@ -25,6 +25,8 @@
 
 struct RAMM{
     int relay_state;
+    bool fail;
+    int  sig;
 };
 
 extern RAMM __Ramm; // __attribute__ ((section (".noinit")));
@@ -32,11 +34,6 @@ extern RAMM __Ramm; // __attribute__ ((section (".noinit")));
 #define SAMPLES_MAX  2880
 #define SIG  0x58
 
-struct Temps
-{
-    int   _count;
-    float _data[SAMPLES_MAX];
-};
 
 class esp_32_base_c
 {
@@ -71,6 +68,7 @@ public:
     static void handleRoot();
     static void handleWifi();
     static void handleOta();
+    static void handleTime();
     static void handleWifiSave();
     static void handleNotFound();
     static void otaUpdate();
@@ -83,7 +81,7 @@ protected:
     static boolean _isIp(String str);
     static String _toStringIp(IPAddress ip) ;
     const __FlashStringHelper * _start_html(bool content=true);
-    const __FlashStringHelper * _end_html();
+    const String _end_html();
     boolean _captivePortal();
 
 protected:
@@ -100,7 +98,7 @@ protected:
     char                 _ipstatic[32];
     char                 _offset[16];
     } _eprom;
-
+    int                 _timezone = 0;
     unsigned long       _last_conn = 0;
     unsigned int        _wlan_status = WL_IDLE_STATUS;
     bool                _otaing = false;

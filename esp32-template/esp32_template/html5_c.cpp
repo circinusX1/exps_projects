@@ -1,7 +1,7 @@
 
 #include "html5_c.h"
 
-
+#if WITH_GRAPH
 html5_c::html5_c()
 {
 
@@ -20,28 +20,28 @@ void html5_c::loop(const thp_str_t& thp, int minutes)
     _samples[minutes/FIVE].temp = thp.temp;
     _samples[minutes/FIVE].hum  = thp.hum;
     _samples[minutes/FIVE].pres = thp.pres;
+    _samples[minutes/FIVE].relay = thp.relay;
     _minutes = minutes/FIVE;
     _thp = thp;
-
-    _has |= thp.temp!=0.0f ? 0x01 : 0x0;
-    _has |= thp.hum>1.0f   ? 0x02 : 0x0;
-    _has |= thp.pres>0.01  ? 0x04 : 0x0;
+    _has |= thp.temp != 0.0f ? 0x01 : 0x0;
+    _has |= thp.hum  >  1.0f ? 0x02 : 0x0;
+    _has |= thp.pres >  0.01 ? 0x04 : 0x0;
 }
 
 void html5_c::page(String& page)
 {
-    page += F("\n<canvas width='");
-    page += String(_w);
-    page += F("' height='");
-    page += String(_h);
-    page += F("' id='ka'>\n");
+
+    page += F("\n<canvas width='700' height='380' id='ka'>\n");
 
     page += F("\n<script>\n");
+    page += F("var Scale=0;\n");
     page += F("////////////////////////////////\n");
 
+    page += F("////////////////////////////////\n");
     page += F("var c=document.getElementById(\"ka\");\n");
+    page += F("c.addEventListener('click', on_click, false);\n");
     page += F("var ctx=c.getContext(\"2d\");\n");
-    page += F("var gw=288.0;\n");
+    page += F("var gw=288.0;\n");   // 5 mins in a day
     page += F("var gh=100.0;\n");
     page += F("var w=c.width;\n");
     page += F("var h=c.height;\n");
@@ -61,12 +61,13 @@ void html5_c::page(String& page)
     page += F("function sx(x){return (x*w)/gw;}\n");
     page += F("function sy(y){return (y*h)/gh;}\n");
 
+
     page += F("////////////////////////////////\n");
-    page += F("const curtime=");
+    page += F("var CurTime=");
     page += String(_minutes);
     page += F(";\n");
 
-    page += F("var tempss = [");
+    page += F("var Temps = [");
     if(_has&0x1)
     {
         for(int e = 0; e < DAY_OF5-1;e++)
@@ -77,7 +78,7 @@ void html5_c::page(String& page)
     }
     page += F("0];\n");
 
-    page += F("var hums = [");
+    page += F("var Hums = [");
     if(_has&0x2)
     {
         for(int e = 0; e < DAY_OF5-1;e++)
@@ -88,7 +89,7 @@ void html5_c::page(String& page)
     }
     page += F("0];\n");
 
-    page += F("var press = [");
+    page += F("var Press = [");
     if(_has&0x4)
     {
         for(int e = 0; e < DAY_OF5-1;e++)
@@ -99,11 +100,18 @@ void html5_c::page(String& page)
     }
     page += F("0];\n\n");
 
-    page += F("draw(tempss,hums,press,curtime);\n");
+    page += F("var Relay = [");
+    for(int e = 0; e < DAY_OF5-1;e++)
+    {
+        page += String(int((_samples[e].relay)));
+        page += F(",");
+    }
+    page += F("0];\n\n");
+
     page += F("start_timer();\n");
     page += F("//////////////////////////////\n"
               "function start_timer() {\n"
-              "    setInterval(update, 10000);\n"
+              "    setInterval(update, 5000);\n"
               "}\n\n"
               "///////////////////////////////\n"
               "function update() {\n"
@@ -114,29 +122,48 @@ void html5_c::page(String& page)
               "fetch('/?fetch', options)\n"
               "      .then(response => response.text())\n"
               "      .then(response => {\n"
-              "         const thl  = response.split(\":\");\n"
-              "         const temps = thl[0].split(\",\");\n"
-              "         const hums  = thl[1].split(\",\");\n"
-              "         const press = thl[2].split(\",\");\n"
-              "         const curtime = parseInt(thl[3]);\n"
-              "         if(curtime>0)\n"
-              "             draw(temps,hums,press,(curtime));\n"
+              "         const thl   = response.split(\":\");\n"
+              "         if(thl.length==5){\n"
+              "             const tt = parseInt(thl[0]);\n"
+              "             const hh = parseInt(thl[1]);\n"
+              "             const pp = parseInt(thl[2]);\n"
+              "             const rr = parseInt(thl[3]);\n"
+              "             const ti = parseInt(thl[4]);\n"
+              "             if(ti<Temps.length) Temps[ti]=tt;\n"
+              "             if(ti<Hums.length)  Hums[ti]=hh;\n"
+              "             if(ti<Press.length) Press[ti]=pp;\n"
+              "             if(ti<Relay.length) Relay[ti]=rr;\n"
+              "             CurTime = ti;\n"
+              "             draw(Temps,Hums,Press,Relay,ti);\n"
+              "         }\n"
               "  });\n"
               "}\n");
+
+    page += F("draw(Temps,Hums,Press,Relay,CurTime);\n");
+    page += F("update();\n");
+    page += F("function on_click(event){Scale++; update(); "
+              " if(Scale==12)Scale=0;\n}");
     page += F("////////////////////////////////\n");
-    page += F("function draw(temps,hums,press,curtime)\n{\n");
+    page += F("function draw(temps,hums,press,relays,curtime)\n{\n");
     page += F("ctx.beginPath();\n");
     page += F("ctx.rect(0, 0, w, h);\n");
-    page += F("ctx.fillStyle = \"#323\";\n");
+    page += F("ctx.fillStyle = \"#000\";\n");
     page += F("ctx.fill(); \n");
 
     page += F("ctx.resetTransform();\n");
     page += F("ctx.scale(1, -1);\n");
     page += F("ctx.translate(0,-h);\n");
 
+    page += F("if(Scale){;\n");
+    page += F(" const left = curtime > (Scale*12) ? (curtime-(Scale*12)) : 0;\n");
+    page += F(" ctx.scale(Scale ,1);\n");
+    page += F(" ctx.translate(sx(-left),1);\n");
+
+    page += F("};\n");
+
     // hour and trigger lines
     page += F("ctx.beginPath();\n");
-        page += F("ctx.strokeStyle = \"#4F4\";\n");
+        page += F("ctx.strokeStyle = \"#4A4\";\n");
         page += F("ctx.moveTo(sx(curtime)+1,0);\n");
         page += F("ctx.lineTo(sx(curtime)+1,h);\n");
     page += F("ctx.stroke();\n");
@@ -179,13 +206,13 @@ void html5_c::page(String& page)
         page += F("ctx.beginPath();\n");
         page += F("ctx.strokeStyle = \"#fAA\";\n");
         page += F("var xo=0;\n");
-        page += F("var yo=sy(tempss[0]);\n");
-        page += F("for(var x=1; x < sx(tempss.length); x++)\n");
+        page += F("var yo=sy(temps[0]);\n");
+        page += F("for(var x=1; x < sx(temps.length); x++)\n");
         page += F("{\n");
         page += F("    ctx.moveTo(sx(xo), sy(yo));\n");
-        page += F("    ctx.lineTo(sx(x), sy(tempss[x]));\n");
+        page += F("    ctx.lineTo(sx(x), sy(temps[x]));\n");
         page += F("    xo=x;\n");
-        page += F("    yo=tempss[x];\n");
+        page += F("    yo=temps[x];\n");
         page += F("}\n");
         page += F("ctx.stroke();\n");
     }
@@ -221,9 +248,23 @@ void html5_c::page(String& page)
         page += F("    yo=press[x];\n");
         page += F("}\n");
         page += F("ctx.stroke();\n");
-
     }
+
+        page += F("ctx.beginPath();\n");
+        page += F("ctx.strokeStyle = \"#FF9\";\n");
+        page += F("var xo=0;\n");
+        page += F("var yo=sy(relays[0]);\n");
+        page += F("for(var x=1; x < sx(relays.length); x++)\n");
+        page += F("{\n");
+        page += F("    ctx.moveTo(sx(xo), sy(yo));\n");
+        page += F("    ctx.lineTo(sx(x), relays[x] ? h/20 : 0);\n");
+        page += F("    xo=sx;\n");
+        page += F("    yo=relays[x];\n");
+        page += F("}\n");
+        page += F("ctx.stroke();\n");
+
     page += F("ctx.resetTransform();\n");
+    // hours
     page += F("var hour = 0;\n");
     page += F("ctx.font = \"12px Arial\";\n");
     page += F("ctx.fillStyle = \"#888\";\n");
@@ -234,13 +275,23 @@ void html5_c::page(String& page)
     page += F(" hour++;\n");
     page += F("}\n");
 
-    page += F("ctx.fillStyle = \"#F00\";\n");
-    page += F("const tstr = tempss[curtime].toString()+'`C';\n");
-    page += F("ctx.fillText(tstr, sx(curtime)+5, 7+sy(tempss[curtime]) );");
+    page += F("hour = 0;\n");
+    page += F("ctx.fillStyle = \"#888\";\n");
+    page += F("for(var y=0; y < h; y += h/10)\n");
+    page += F("{\n");
+    page += F(" const ss = hour.toString();\n");
+    page += F(" ctx.fillText(ss, 1, h-y);\n");
+    page += F(" hour+=10;\n");
+    page += F("}\n");
+    // temp
 
-    page += F("ctx.fillStyle = \"#00F\";\n");
-    page += F("const hstr = hums[curtime].toString()+'%%';\n");
-    page += F("ctx.fillText(hstr, sx(curtime)+5, sy(hums[curtime]-7) );");
+    page += F("ctx.fillStyle = \"#F88\";\n");
+    page += F("const tstr = Temps[curtime].toString()+'`C';\n");
+    page += F("ctx.fillText(tstr, sx(curtime)+5, h-sy(Temps[curtime]) );");
+
+    page += F("ctx.fillStyle = \"#88F\";\n");
+    page += F("const hstr = Hums[curtime].toString()+'%%';\n");
+    page += F("ctx.fillText(hstr, sx(curtime)+5, h-sy(Hums[curtime]) );");
 
     page += F("}\n");
 
@@ -248,3 +299,4 @@ void html5_c::page(String& page)
 
 
 }
+#endif

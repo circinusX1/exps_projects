@@ -11,3 +11,5 @@ libraries/WebOTA/src
 libraries/BetterOTA/src
 libraries/BetterOTA/src/terminal
 libraries/BetterOTA/src/terminal/frontendsource
+../../../../../BOARDS/ESP/Esp8266-Arduino-Makefile
+libraries/AHT10/src
