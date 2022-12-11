@@ -188,7 +188,7 @@ bool    esp32_full::loop()
             _blink_rate = AP_BLINK;
         }
         _toggle=!_toggle;
-        if(_toggle==0 && _blink_rate == OFF_BLINK)
+        if(_toggle==1 && _blink_rate == OFF_BLINK)
         {
             if(!This->_otaing)
             {
