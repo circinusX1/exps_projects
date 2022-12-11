@@ -178,17 +178,26 @@ bool    esp32_full::loop()
 
     if(millis() - _blinktime > _blink_rate)
     {
-        digitalWrite(LED, _toggle);
-        if(WL_CONNECTED==_wlan_status)
+        if(OFF_BLINK==_blink_rate && !This->_otaing)
         {
-            _blink_rate = _relay_state ? ON_BLINK : OFF_BLINK;
+          digitalWrite(LED, 1); //  a pulse to less disturbance
+          delay(50);
+          digitalWrite(LED, 0);
         }
         else
         {
-            _blink_rate = AP_BLINK;
+          digitalWrite(LED, _toggle);
+          if(WL_CONNECTED==_wlan_status)
+          {
+              _blink_rate = _relay_state ? ON_BLINK : OFF_BLINK;
+          }
+          else
+          {
+              _blink_rate = AP_BLINK;
+          }
+          _toggle=!_toggle;
+          _blinktime = millis();
         }
-        _toggle=!_toggle;
-        _blinktime = millis();
     }
     return true;
 }
@@ -313,6 +322,7 @@ const __FlashStringHelper * esp32_full::_end_html()
 
 const __FlashStringHelper * esp32_full::_start_html(int width)
 {
+    This->_otaing=false;
     ESP_S()->sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     ESP_S()->sendHeader("Pragma", "no-cache");
     ESP_S()->sendHeader("Expires", "-1");
@@ -443,6 +453,7 @@ void esp32_full::handleNotFound()
 
 void esp32_full::handleRoot()
 {
+    This->_otaing=false;
     if (This->_captivePortal())
     {
         return;
@@ -462,7 +473,8 @@ void esp32_full::handleRoot()
 
 void esp32_full::handleOta()
 {
-    //TRACE();
+    
+
     String page = This->_start_html();
     page += "<div id='msg'></div><form method='POST' id='form' name='form' "
             "action='/fileup' enctype='multipart/form-data' id='upload_form'>"
@@ -483,4 +495,5 @@ void esp32_full::handleOta()
             "</script>\n";
     page+=This->_end_html();
     ESP_S()->send(200, "text/html", page);
+    This->_otaing=true;
 }

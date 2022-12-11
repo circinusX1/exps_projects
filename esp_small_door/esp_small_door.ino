@@ -24,12 +24,6 @@ public:
 
     void  user_loop(unsigned int loop)
     {
-
-        if(millis()-_regain>FEW_HOURS)
-        {
-            Serial.println("rebooting now");
-            REBOOT();
-        }
         delay(10);
         return;
     }
