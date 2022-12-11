@@ -3,9 +3,6 @@
 
 int   RELAY = 12;
 
-#define FEW_HOURS (3600000*12)  //reboot
-
-
 class MyEsp : public esp32_full
 {
 public:

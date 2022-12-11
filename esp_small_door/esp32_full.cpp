@@ -178,26 +178,25 @@ bool    esp32_full::loop()
 
     if(millis() - _blinktime > _blink_rate)
     {
-        if(OFF_BLINK==_blink_rate && !This->_otaing)
+        digitalWrite(LED, _toggle);
+        if(WL_CONNECTED==_wlan_status)
         {
-          digitalWrite(LED, 1); //  a pulse to less disturbance
-          delay(50);
-          digitalWrite(LED, 0);
+            _blink_rate = _relay_state ? ON_BLINK : OFF_BLINK;
         }
         else
         {
-          digitalWrite(LED, _toggle);
-          if(WL_CONNECTED==_wlan_status)
-          {
-              _blink_rate = _relay_state ? ON_BLINK : OFF_BLINK;
-          }
-          else
-          {
-              _blink_rate = AP_BLINK;
-          }
-          _toggle=!_toggle;
-          _blinktime = millis();
+            _blink_rate = AP_BLINK;
         }
+        _toggle=!_toggle;
+        if(_toggle==0 && _blink_rate == OFF_BLINK)
+        {
+            if(!This->_otaing)
+            {
+                delay(50);
+                digitalWrite(LED, _toggle);
+            }
+        }
+        _blinktime = millis();
     }
     return true;
 }
