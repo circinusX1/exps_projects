@@ -63,7 +63,7 @@ bool    esp32_full::setup()
     ESP_S()->on("/fileup", HTTP_POST, []() {
         ////TRACE();
         ESP_S()->sendHeader("Connection", "close");
-        ESP_S()->send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+        ESP_S()->send(200, "text/plain", (Update.hasError()) ? "FAIL" : "<a href='/'>FLASH OK HOME</a>");
         ////TRACE();
         delay(1000);
         ESP.restart();
@@ -99,9 +99,22 @@ bool    esp32_full::setup()
     Serial.print("bconnect=");
     Serial.println(_b_conn2wifi);
 
-    _relay_state=!__Ramm.relay_state;
-
     return true;
+}
+
+void  esp32_full::force_ap()
+{
+    for(int i=0; i <5; i++)
+    {
+      digitalWrite(LED, LOW);
+      delay (200);
+      digitalWrite(LED, HIGH);
+      delay (200);
+    }
+    WiFi.disconnect();
+    delay(100);
+    WiFi.enableAP(true);
+    delay(100);
 }
 
 bool    esp32_full::loop()
@@ -181,7 +194,7 @@ bool    esp32_full::loop()
         digitalWrite(LED, _toggle);
         if(WL_CONNECTED==_wlan_status)
         {
-            _blink_rate = _relay_state ? ON_BLINK : OFF_BLINK;
+            _blink_rate = __Ramm.relay_state ? ON_BLINK : OFF_BLINK;
         }
         else
         {
@@ -198,6 +211,7 @@ bool    esp32_full::loop()
         }
         _blinktime = millis();
     }
+    
     return true;
 }
 
