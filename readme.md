@@ -19,9 +19,11 @@
    * https://www.youtube.com/watch?v=9XBUNii-3eU 
       * Never hook anything on other GPIO'd or run wires ouside of these plugs casing. THE POWER IS NOT ISOLATED
       * NEVER POWER WITHOUT THE CASE ON
+      * NEVER CONNECT ANY OTHER RELAYS. The power module get's on FIRE FIRE FIRE
    * https://www.youtube.com/watch?v=RGdSd7MX4sw
       * Never hook anything on other GPIO'd or run wires ouside of these plugs casing. THE POWER IS NOT ISOLATED
       * NEVER POWER WITHOUT THE CASE ON
+      * NEVER CONNECT ANY OTHER RELAYS. The power module get's on FIRE FIRE FIRE
    * Yet to come
 
 --
