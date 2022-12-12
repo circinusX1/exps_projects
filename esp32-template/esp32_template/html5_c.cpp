@@ -1,4 +1,5 @@
 
+
 #include "html5_c.h"
 
 #if WITH_GRAPH
@@ -141,8 +142,7 @@ void html5_c::page(String& page)
 
     page += F("draw(Temps,Hums,Press,Relay,CurTime);\n");
     page += F("update();\n");
-    page += F("function on_click(event){Scale++; update(); "
-              " if(Scale==12)Scale=0;\n}");
+    page += F("function on_click(event){if(Scale==0)Scale=3;else Scale=0; update();} ");
     page += F("////////////////////////////////\n");
     page += F("function draw(temps,hums,press,relays,curtime)\n{\n");
     page += F("ctx.beginPath();\n");

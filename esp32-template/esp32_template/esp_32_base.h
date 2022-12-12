@@ -20,7 +20,7 @@
 #define AP_BLINK     50
 #define ON_BLINK     300
 #define OFF_BLINK    800
-#define LED          2
+
 
 
 struct RAMM{
