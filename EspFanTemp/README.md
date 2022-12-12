@@ -1,2 +1,3 @@
 # EspFanTemp
-Drawer temerature regulator
+Drawer temperature regulator with fan control
+
