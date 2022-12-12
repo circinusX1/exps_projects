@@ -1,8 +1,7 @@
+
+
 #include "esp32_full.h"
 #include <Wire.h>
-
-int   RELAY = 12;
-int   BUTTON = 14; // = 0; // no button
 
 class MyEsp : public esp32_full
 {
@@ -26,9 +25,9 @@ public:
         {
             for(int i=0;i<10;i++)
             {
-                digitalWrite(LED, LOW);
+                if(LED)digitalWrite(LED, LOW);
                 delay (100);
-                digitalWrite(LED, HIGH);
+                if(LED)digitalWrite(LED, HIGH);
                 delay (100);
             }
             this->force_ap();
@@ -70,9 +69,8 @@ public:
         }
         if(srv->hasArg("button"))
         {
-            int nBUT = srv->arg("button").toInt();
-            pinMode(nBUT, INPUT);
-            BUTTON = nBUT;
+            _btgpio = srv->arg("button").toInt();
+            pinMode(_btgpio, INPUT);
         }
         if(srv->hasArg("gpio"))
         {
@@ -91,7 +89,7 @@ public:
         page += "<li><a href='?relay=0'>TURN OFF</a>";
         page += "<li>LED:" + String(LED);
         page += "<li>RELAY:" + String(RELAY);
-        page += "<li>BUTTON:" + String(BUTTON) + " = " + (get_button_state());
+        page += "<li>BUTTON:" + String(_btgpio) + " = " + (get_button_state());
         if(__Ramm.relay_state==LOW)
             page += "<li> LED OFF";
         else
@@ -116,7 +114,7 @@ public:
 
     int get_button_state() // globe plug
     {
-        return digitalRead(BUTTON);
+        return _btgpio  ? digitalRead(_btgpio) : HIGH;
     }
     
     String _page;
@@ -124,6 +122,7 @@ public:
     bool   _out = false;
     int    _button = 0;
     int    _down = 0;
+    int    _btgpio = BUTTON;
     uint32_t _regain = millis();
 } TheEsp(80);
 
@@ -136,7 +135,7 @@ void setup() {
     if(RELAY) pinMode(RELAY, OUTPUT);
     if(LED)   pinMode(LED, OUTPUT);
     if(BUTTON)pinMode(BUTTON, INPUT);
-    digitalWrite(RELAY, __Ramm.relay_state);
+    if(RELAY)digitalWrite(RELAY, __Ramm.relay_state);
     TheEsp._button = TheEsp.get_button_state()==LOW ? -1 : 0;
     Serial.println("exiting setup3");
 }

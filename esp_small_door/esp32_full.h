@@ -1,7 +1,7 @@
 #ifndef AP_WIFI_OTA
 #define AP_WIFI_OTA
 
-
+#include "_config.h"
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -13,7 +13,6 @@
 #define AP_BLINK     50
 #define ON_BLINK     300
 #define OFF_BLINK    1800
-#define LED          4     //  0 -> no LED 
 
 
 struct RAMM{
@@ -23,7 +22,7 @@ struct RAMM{
 extern RAMM __Ramm; // __attribute__ ((section (".noinit")));
 
 #define SAMPLES_MAX  2880
-#define SIG  0x57
+#define SIG  0x58
 
 struct Temps
 {

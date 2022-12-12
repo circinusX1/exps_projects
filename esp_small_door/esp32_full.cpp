@@ -106,9 +106,9 @@ void  esp32_full::force_ap()
 {
     for(int i=0; i <5; i++)
     {
-      digitalWrite(LED, LOW);
+      if(LED)digitalWrite(LED, LOW);
       delay (200);
-      digitalWrite(LED, HIGH);
+      if(LED)digitalWrite(LED, HIGH);
       delay (200);
     }
     WiFi.disconnect();
@@ -191,7 +191,7 @@ bool    esp32_full::loop()
 
     if(millis() - _blinktime > _blink_rate)
     {
-        digitalWrite(LED, _toggle);
+        if(LED)digitalWrite(LED, _toggle);
         if(WL_CONNECTED==_wlan_status)
         {
             _blink_rate = __Ramm.relay_state ? ON_BLINK : OFF_BLINK;
@@ -206,7 +206,7 @@ bool    esp32_full::loop()
             if(!This->_otaing)
             {
                 delay(50);
-                digitalWrite(LED, _toggle);
+                if(LED)digitalWrite(LED, _toggle);
             }
         }
         _blinktime = millis();
@@ -409,8 +409,8 @@ void esp32_full::handleWifi()
                 "</table>"
                 "\r\n<br /><form method='POST' action='wifisave'><h4>Connect to network:</h4>"
                 "<input type='text' placeholder='SSID' name='n'/>"
-                "<br /><input type='_cur_ssid_pswd' placeholder='PASSWORD' name='p'/>"
-                "<br /><input type='_ipstatic' placeholder='192.168.1.178' name='i'/>"
+                "<br /><input type='password' placeholder='PASSWORD' name='p'/>"
+                "<br /><input type='text' placeholder='192.168.X.XXX' name='i'/>"
                 "<br /><input type='submit' value='Apply'/></form>");
     Page += This->_end_html();
 
