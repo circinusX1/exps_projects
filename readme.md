@@ -3,7 +3,7 @@
 --
 ### esp32-template
 
-   * A humidifier template with HTML5 graphic
+   * A HVAC humidifier congtrol with ATH10 ESP8255 and HTML5 graphic for 24 hours for Hum/Temp and triggering T and H
    * suports SHT21 and ATH10. See _config.h file
    * You can ope the project with QT. Needs https://github.com/thunderace/Esp8266-Arduino-Makefile/blob/master/espXArduino.mk
    * clone the above git and change Makefile to include the include <absolute path to>/Esp8266-Arduino-Makefile/espXArduino.mk
