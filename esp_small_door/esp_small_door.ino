@@ -102,12 +102,12 @@ public:
     {
         if(on)
         {
-          if(RELAY)digitalWrite(RELAY, HIGH);
+          digitalWrite(RELAY, HIGH);
           __Ramm.relay_state = 1;
         }
         else
         {
-          if(RELAY)digitalWrite(RELAY, LOW);
+          digitalWrite(RELAY, LOW);
           __Ramm.relay_state = 0;
         }
     }

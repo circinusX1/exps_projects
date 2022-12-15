@@ -5,8 +5,11 @@
 #define   LED           2
 
 #define HAS_I2C         1
-#define I2C_SDA         12
-#define I2C_SCL         13
+//#define I2C_SDA         12
+//#define I2C_SCL         13
+
+#define I2C_SDA         4
+#define I2C_SCL         5
 
 #define WITH_GRAPH      1
 #define WITH_SHT21      0
