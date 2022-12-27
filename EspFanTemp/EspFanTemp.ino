@@ -83,7 +83,7 @@ void setup()
 
     wifiManager.setSTAStaticIPConfig(_ip, _gw, _sn);
 
-    wifiManager.autoConnect("marius1","zoomahia1");
+    wifiManager.autoConnect("marius1","---------");
 
 
     // or use this for auto generated name ESP + ChipID
