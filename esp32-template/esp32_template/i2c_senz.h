@@ -18,6 +18,7 @@ extern RAMM __Ramm;
 #   include "Adafruit_BMP085_U.h" // __BMP085_H__
 #endif
 
+
 #define TW24_HOURS  288
 struct thp_str_t
 {
@@ -30,7 +31,7 @@ struct thp_str_t
     float pres_l = 1000;
 };
 
-#if HAS_I2C
+
 class i2c_senz_c
 {
 public:
@@ -39,6 +40,10 @@ public:
 
     ~i2c_senz_c(){
         Serial.println("\nI2C ended");
+        end();
+    }
+
+    void end(){
     }
 
     void begin(int sda=I2C_SDA, int scl=I2C_SCL)
@@ -46,6 +51,7 @@ public:
         Serial.println("Wire BEGIN");
 
         Wire.begin(sda,scl);
+
         Serial.println("Scanning Wire began");
         bool ret = scan();
         if(ret)
@@ -93,18 +99,21 @@ public:
             Serial.print("WITH_ATH Okay: TH=");
             Serial.println(max);
             Serial.print("T:"); Serial.println(_ath->readTemperature());
+            delay(100);
             Serial.print("H:"); Serial.println(_ath->readHumidity());
+            delay(100);
 #endif
         }
         Serial.println("Scan Ended");
         __Ramm.fail=0;
     }
     //////////////////////////////////////////////////////////////////////////////////
-    bool scan()
+    static bool scan(String* page=nullptr)
     {
         bool ret = false;
         byte error, address;
         Serial.println("Scanning");
+        if(page) page->concat("Scanning<br>");
         for(address = 1; address < 127; address++ )
         {
             Serial.print(int(address));
@@ -118,13 +127,17 @@ public:
             error = Wire.endTransmission();
             if (error == 0)
             {
-                Serial.println("I2C device: 0x");
+                Serial.print("\r\nI2C device: 0x");
                 Serial.print(address, HEX);
                 Serial.println("");
+                if(page) page->concat("Found : 0x");
+                if(page) page->concat(String(address,HEX));
+                if(page) page->concat("<br />");
                 ret = true;
             }
         }
         Serial.println("Scaning Done");
+        if(page) page->concat("Scanning Done<br>");
         return ret;
     }
 
@@ -193,6 +206,6 @@ private:
     String                 _i2cs;
     bool                   _hasdev=false;
 };
-#endif
+
 
 #endif // I2C_BUZ_H

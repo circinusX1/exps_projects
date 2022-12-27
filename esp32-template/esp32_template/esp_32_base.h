@@ -71,6 +71,7 @@ public:
     static void handleTime();
     static void handleWifiSave();
     static void handleNotFound();
+    static void handleI2c();
     static void otaUpdate();
     static void IRAM_ATTR delayMicroseconds2(uint32_t us);
 
@@ -82,14 +83,14 @@ protected:
     static String _toStringIp(IPAddress ip) ;
     const __FlashStringHelper * _start_html(bool content=true);
     const String _end_html();
-    boolean _captivePortal();
+    boolean _capturePage();
 
 protected:
    // DNSServer*           _dns_srv = nullptr;
     ESP8266WebServer*    _esp_srv = nullptr; //(80);
     IPAddress*           _ip_addr = nullptr;    //(10, 5, 5, 1);
     IPAddress*           _net_mask = nullptr;   //(255, 255, 0, 0);
-    boolean              _b_conn2wifi = false;
+    boolean              _try_connect = false;
     boolean              _bsta = false;
     struct {
     byte                   sig;
@@ -110,7 +111,7 @@ protected:
     int                 _seconds = 0;
     int                 _graphtime = 0;
     unsigned long       _ntptime = 0;
-    Ticker              _tictacker;
+    Ticker              _timer;
     bool                _otaenabled = false;
 #if WITH_NTP
     WiFiUDP     _ntpUDP;
@@ -118,5 +119,7 @@ protected:
 #endif
 
 };
+
+extern EEPROMClass EEPROM;
 
 #endif

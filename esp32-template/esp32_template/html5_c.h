@@ -21,7 +21,6 @@ public:
 public:
     thp_str_t   _thp;
     thp_str_t   _samples[DAY_OF5];
-    int         _index;
     int         _w,_h;
     int         _minutes;
     int         _has = 0;

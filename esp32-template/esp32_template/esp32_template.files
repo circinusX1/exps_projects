@@ -1,7 +1,6 @@
 ../../../../../BOARDS/ESP/Esp8266-Arduino-Makefile/espXArduino.mk
 Makefile
 _config.h
-arduino_ota.cpp
 esp32_template.ino
 esp_32_base.cpp
 esp_32_base.h
@@ -9,6 +8,7 @@ flash.sh
 html5_c.cpp
 html5_c.h
 i2c_senz.h
+i2c_senz.cpp
 libraries/AHT10/src/AHT10.cpp
 libraries/AHT10/src/AHT10.h
 libraries/Adafruit_BMP085_U/src/Adafruit_BMP085_U.cpp

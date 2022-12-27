@@ -1,5 +1,6 @@
 
 #include "esp_32_base.h"
+#include "i2c_senz.h"
 
 #define         FEW_HOURS       7200000
 const char*     AP_SSID_NAME = "door";
@@ -9,7 +10,7 @@ const byte      DNS_PORT = 53;
 static esp_32_base_c*  This;
 #define ESP_S()     This->_esp_srv
 
-RAMM __Ramm __attribute__ ((section (".noinit")));
+RAMM __Ramm __attribute__ ((section (".noinit"))); // will go away when power sleep
 
 
 esp_32_base_c::esp_32_base_c()
@@ -57,6 +58,7 @@ bool    esp_32_base_c::setup()
     ESP_S()->on("/", esp_32_base_c::handleRoot);
     ESP_S()->on("/index.html", esp_32_base_c::handleRoot);
     ESP_S()->on("/wifi", esp_32_base_c::handleWifi);
+    ESP_S()->on("/i2c", esp_32_base_c::handleI2c);
     ESP_S()->on("/ota", esp_32_base_c::handleOta);
     ESP_S()->on("/time", esp_32_base_c::handleTime);
     ESP_S()->on("/wifisave", esp_32_base_c::handleWifiSave);
@@ -67,12 +69,13 @@ bool    esp_32_base_c::setup()
     ESP_S()->onNotFound(esp_32_base_c::handleNotFound);
 
     ESP_S()->on("/fileup", HTTP_POST, []() {
-        TRACE();
+        String fail = F("<H2>Update failed</H2>");
+        String okay = F("OKAY");
+
         ESP_S()->sendHeader("Connection", "close");
-        ESP_S()->send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
-        TRACE();
+        ESP_S()->send(200, "text/plain", (Update.hasError()) ? fail : okay);
+        delay(100);
         ESP.restart();
-        TRACE();
     }, []() {
         HTTPUpload& upload = ESP_S()->upload();
         if (upload.status == UPLOAD_FILE_START) {
@@ -102,20 +105,22 @@ bool    esp_32_base_c::setup()
     ESP_S()->begin();
     Serial.println("HTTP ESP_S() started");
     _loadCredentials();
-    _b_conn2wifi = (_eprom.sig==SIG && _eprom._ipstatic[0]);
+    _try_connect = (_eprom.sig==SIG && _eprom._ipstatic[0]);
     Serial.print("bconnect=");
-    Serial.println(_b_conn2wifi);
+    Serial.println(_try_connect);
 
 #if WITH_NTP
     if(_eprom._offset[0])
     {
+        LOG("NTP START");
         _timezone = ::atoi(_eprom._offset);
         _timeClient =  new NTPClient(_ntpUDP,_timezone*3600);
         _timeClient->begin();
+        LOG("NTP END");
     }
 #endif
 
-    _tictacker.attach(1, esp_32_base_c::tick_tack);
+    _timer.attach(1, esp_32_base_c::tick_tack);
 
     this->user_begin();
 
@@ -139,12 +144,12 @@ bool    esp_32_base_c::loop()
         ESP_S()->handleClient();
         return true;
     }
-    if (_b_conn2wifi)
+    if (_try_connect)
     {
         Serial.println("Connecting to wifi");
         _connectWifi();
         _last_conn = millis();
-        _b_conn2wifi = false;
+        _try_connect = false;
         _bsta = false;
     }
     else if(_eprom._ipstatic[0]==0)
@@ -162,7 +167,7 @@ bool    esp_32_base_c::loop()
         if (s == 0 && (millis() > (_last_conn + 60000) || millis() < _last_conn))
         {
             Serial.println("retrying to connect");
-            _b_conn2wifi = true;
+            _try_connect = true;
         }
         if (_wlan_status != s)
         {
@@ -176,15 +181,19 @@ bool    esp_32_base_c::loop()
                 Serial.println(_eprom._cur_ssid_name);
                 Serial.print("IP address: ");
                 Serial.println(WiFi.localIP());
-                Serial.print("Shutting down AP ");
+                LOG("Shutting down AP ");
                 WiFi.softAPdisconnect (true);
                 _bsta = false;
+                LOG("AP OFFLINE");
 #if WITH_NTP
-                _timeClient->update();
-                _ntptime = millis();
-                _seconds = _timeClient->getHours()*60*60;
-                _seconds += _timeClient->getMinutes()*60;
-                _seconds += _timeClient->getSeconds();
+                if(_timeClient)
+                {
+                    _timeClient->update();
+                    _ntptime = millis();
+                    _seconds = _timeClient->getHours()*60*60;
+                    _seconds += _timeClient->getMinutes()*60;
+                    _seconds += _timeClient->getSeconds();
+                }
 #endif
             }
             else if (s == WL_NO_SSID_AVAIL)
@@ -199,14 +208,17 @@ bool    esp_32_base_c::loop()
         {
             _bsta = false;
 #if WITH_NTP
-            if(millis()  - _ntptime  > FEW_HOURS || millis()<_ntptime)
+            if(_timeClient)
             {
-                _timeClient->update();
-                _ntptime = millis();
+                if(millis()  - _ntptime  > FEW_HOURS || millis()<_ntptime)
+                {
+                    _timeClient->update();
+                    _ntptime = millis();
+                }
+                _seconds = _timeClient->getHours()*60*60;
+                _seconds += _timeClient->getMinutes()*60;
+                _seconds += _timeClient->getSeconds();
             }
-            _seconds = _timeClient->getHours()*60*60;
-            _seconds += _timeClient->getMinutes()*60;
-            _seconds += _timeClient->getSeconds();
 #endif
         }
     }while(0);
@@ -337,7 +349,7 @@ void IRAM_ATTR esp_32_base_c::delayMicroseconds2(uint32_t us)
     }
 }
 
-boolean esp_32_base_c::_captivePortal()
+boolean esp_32_base_c::_capturePage()
 {
     if (!_isIp(ESP_S()->hostHeader()) &&
             ESP_S()->hostHeader() != (String(HOST_NAME) + ".local"))
@@ -355,7 +367,7 @@ boolean esp_32_base_c::_captivePortal()
 const String esp_32_base_c::_end_html()
 {
     return F("</div></body></html>");
-/*
+    /*
     String ends = "</div>\n"
                   "<script> const seconds = new Date().getTime() / 1000;\n"
     "let options = {\n"
@@ -511,7 +523,7 @@ void esp_32_base_c::handleWifiSave()
     ESP_S()->client().stop(); // Stop is needed because we sent no content length
     This->_saveCredentials();
     REBOOT();
-    This->_b_conn2wifi = This->_eprom.sig==SIG; // Request WLAN _b_conn2wifi with new credentials if there is a SSID
+    This->_try_connect = This->_eprom.sig==SIG; // Request WLAN _try_connect with new credentials if there is a SSID
 
 }
 
@@ -519,7 +531,7 @@ void esp_32_base_c::handleNotFound()
 {
     TRACE();
     This->_otaing=false;
-    if (This->_captivePortal()) { // If caprive portal redirect instead of displaying the error page.
+    if (This->_capturePage()) { // If caprive portal redirect instead of displaying the error page.
         return;
     }
     String message =This->_start_html();
@@ -544,7 +556,7 @@ void esp_32_base_c::handleNotFound()
 
 void esp_32_base_c::handleRoot()
 {
-    if (This->_captivePortal())
+    if (This->_capturePage())
     {
         return;
     }
@@ -560,37 +572,21 @@ void esp_32_base_c::handleRoot()
     }
 }
 
-void esp_32_base_c::otaUpdate()
+void esp_32_base_c::handleI2c()
 {
-    TRACE();
-    HTTPUpload& upload = ESP_S()->upload();
-
-    Serial.printf("Status = %d", upload.status);
-
-    if (upload.status == UPLOAD_FILE_START)
+    if (This->_capturePage())
     {
-        TRACE();
-        Serial.printf("Update: %s\n", upload.filename.c_str());
-        if (!Update.begin(900000)) { //start with max available size
-            TRACE();
-            Update.printError(Serial);
-        }
-    } else if (upload.status == UPLOAD_FILE_WRITE)
-    {
-        /* flashing firmware to ESP*/
-        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-            TRACE();
-            Update.printError(Serial);
-        }
-    } else if (upload.status == UPLOAD_FILE_END)
-    {
-        if (Update.end(true)) { //true to set the size to the current progress
-            Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-            Serial.flush();
-            //ESP.restart();
-        } else {
-            Update.printError(Serial);
-        }
+        return;
     }
-    TRACE();
+    if(This->_bsta)
+    {
+        esp_32_base_c::handleWifi();
+    }
+    else
+    {
+        String page;
+
+        i2c_senz_c::scan(&page);
+        ESP_S()->send(200, "text/html", page);
+    }
 }

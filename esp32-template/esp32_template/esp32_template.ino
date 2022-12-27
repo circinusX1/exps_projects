@@ -119,9 +119,9 @@ void  my_esp_c::user_loop(unsigned int loop)
 #endif
         }
 #if HAS_I2C
-        if(_htp.hum>0 && _htp.hum_l>0 && _user.active)
+        if(_user.active)
         {
-            if(_htp.temp!=0 && _htp.hum_l>0)
+            if(_htp.temp!=0)
             {
                 if(_htp.temp > _htp.temp_l+1 && _htp.hum < _htp.hum_l-1 )
                 {
@@ -231,6 +231,38 @@ void  my_esp_c::page_request(ESP8266WebServer* srv, String& page)
         if(srv->arg("relay")=="0"){
             relay_off();
         }
+    }
+    if(srv->hasArg("i2c")) // i2c=2,2
+    {
+         LOG("I2C PAGE");
+#if HAS_I2C
+        _senz.end();
+#endif
+         page += F("<form method='GET' action='/?i2c'>"
+               "<li><input type='text' hidden name='i2c'/>"
+               "<li><input type='text' placeholder='SDA' name='sda'/>"
+               "<li><input type='text' placeholder='SCL' name='scl'/>"
+               "<li><input type='submit' value='Apply'/></form>");
+         page += F("<hr>");
+        if(srv->hasArg("sda") && srv->hasArg("scl"))
+        {
+            char sda[8] = {0};
+            char scl[8] = {0};
+            page += F("<pre>");
+            _esp_srv->arg("sda").toCharArray(sda,6);
+            _esp_srv->arg("scl").toCharArray(scl,6);
+            LOG("I2C %d %d", ::atoi(sda), ::atoi(scl));
+            Wire.begin(::atoi(sda), atoi(scl));
+            i2c_senz_c::scan(&page);
+            page += F("</pre>");
+            page +=  _end_html();
+
+        }
+
+#if HAS_I2C
+        _senz.begin();
+#endif
+        return;
     }
     if(srv->hasArg("gpio"))
     {
