@@ -223,7 +223,7 @@ void html5_c::page(String& page)
         page += F("ctx.strokeStyle = \"#AAf\";\n");
         page += F("var xo=0;\n");
         page += F("var yo=sy(hums[0]);\n");
-        page += F("for(var x=1; x < sx(hums.length); x++)\n");
+        page += F("for(var x=1; x < hums.length; x++)\n");
         page += F("{\n");
         page += F("    ctx.moveTo(sx(xo), sy(yo));\n");
         page += F("    ctx.lineTo(sx(x), sy(hums[x]));\n");
@@ -240,7 +240,7 @@ void html5_c::page(String& page)
         page += F("ctx.strokeStyle = \"#9F9\";\n");
         page += F("var xo=0;\n");
         page += F("var yo=sy(press[0]);\n");
-        page += F("for(var x=1; x < sx(press.length); x++)\n");
+        page += F("for(var x=1; x < press.length; x++)\n");
         page += F("{\n");
         page += F("    ctx.moveTo(sx(xo), sy(yo));\n");
         page += F("    ctx.lineTo(sx(x), sy(press[x]));\n");
@@ -254,7 +254,7 @@ void html5_c::page(String& page)
         page += F("ctx.strokeStyle = \"#FF9\";\n");
         page += F("var xo=0;\n");
         page += F("var yo=sy(relays[0]);\n");
-        page += F("for(var x=1; x < sx(relays.length); x++)\n");
+        page += F("for(var x=1; x < relays.length; x++)\n");
         page += F("{\n");
         page += F("    ctx.moveTo(sx(xo), sy(yo));\n");
         page += F("    ctx.lineTo(sx(x), relays[x] ? h/20 : 0);\n");

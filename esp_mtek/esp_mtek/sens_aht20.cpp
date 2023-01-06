@@ -1,7 +1,9 @@
+
 #include "sens_aht20.h"
 #include "application.h"
+#if I2C_SDA
 
-sens_aht20::sens_aht20(int se_id, uint8_t addr):senssor_th(se_id, addr)
+sens_aht20::sens_aht20(int se_id, uint8_t addr):sensor_th_t(se_id, addr)
 {
     _type=MTEMP|MHUM;
 }
@@ -30,6 +32,7 @@ void sens_aht20::begin(int sda, int scl, uint8_t addr)
 void sens_aht20::end()
 {
     delete _aht;
+    _aht=nullptr;
 }
 
 void sens_aht20::loop()
@@ -41,3 +44,5 @@ void sens_aht20::loop()
         app_t::TheApp->on_sensor_event(this);
     }
 }
+
+#endif // #if I2C_SDA

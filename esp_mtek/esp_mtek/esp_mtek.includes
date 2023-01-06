@@ -4,6 +4,7 @@ libraries/Adafruit_Sensor
 libraries/ElegantOTA/src
 libraries/ESP8266HTTPUpdateServer/src
 libraries/NTPClient/src
+libraries/ESPFlash/src
 libraries/SHT2x
 libraries/Ticker/src
 libraries/WebOTA

@@ -1,4 +1,5 @@
-#include "_dev_config.h"
+#include "_my_config.h"
+#include "_utils.h"
 #include "hot_ram.h"
 
 ram_str_t    Ramm;

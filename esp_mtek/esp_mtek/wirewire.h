@@ -1,10 +1,11 @@
 #ifndef WIREWIRE_H
 #define WIREWIRE_H
 
-#include "_dev_config.h"
+#include "_my_config.h"
+#include "_utils.h"
 #include <twi.h>
 #include <Wire.h>
-
+#if I2C_SDA
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,6 +63,6 @@ inline void i2c_end()
 
 bool i2c_scan(String* page, uint8_t* paddrs);
 
-
+#endif //#if I2C_SDA
 
 #endif // WIREWIRE_H

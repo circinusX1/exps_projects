@@ -1,6 +1,7 @@
 
 #include "wirewire.h"
 
+#if I2C_SDA
 
 bool _taken = false;
 int  _i2c_sda,_i2c_scl;
@@ -14,12 +15,6 @@ bool i2c_scan(String* page, uint8_t* paddrs)
     if(page) page->concat("Scanning<br>");
     for(address = 1; address < 127; address++ )
     {
-        Serial.print(int(address));
-        Serial.print(" ");
-        Serial.flush();
-        if(address%32==0)
-            Serial.println("");
-
         Wire.beginTransmission(address);
         delay(32);
         error = Wire.endTransmission();
@@ -43,3 +38,4 @@ bool i2c_scan(String* page, uint8_t* paddrs)
     if(page) page->concat("Scanning Done<br>");
     return ret;
 }
+#endif //  #if I2C_SDA

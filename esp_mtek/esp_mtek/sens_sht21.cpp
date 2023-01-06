@@ -1,7 +1,8 @@
+
 #include "sens_sht21.h"
 #include "application.h"
-
-sens_sht21::sens_sht21(int se_id, uint8_t addr):senssor_th(se_id, addr)
+#if I2C_SDA
+sens_sht21::sens_sht21(int se_id, uint8_t addr):sensor_th_t(se_id, addr)
 {
     _type=MTEMP|MHUM;
 }
@@ -20,6 +21,7 @@ void sens_sht21::begin(int sda, int scl, uint8_t addr)
 void sens_sht21::end()
 {
     delete _sht;
+    _sht=nullptr;
 }
 
 void sens_sht21::loop()
@@ -33,3 +35,4 @@ void sens_sht21::loop()
     }
 }
 
+#endif //#if I2C_SDA

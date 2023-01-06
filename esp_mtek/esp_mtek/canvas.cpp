@@ -1,6 +1,6 @@
 #include "canvas.h"
 
-
+#if WITH_GRAPH
 
 canvas::canvas(int w, int h):_w(w),_h(h)
 {
@@ -11,8 +11,7 @@ canvas::canvas(int w, int h):_w(w),_h(h)
 void    canvas::draw(String& page)
 {
     page += "<hr>";
-    page += F("\n<canvas width='700' height='380' id='ka'>\n");
-
+    page += F("\n<canvas width='1000' height='400' id='ka'>\n");
     page += F("\n<script>\n");
     //////////////////////////////////////////////////////////////////////////////////////
     page += F("var Scale=0;\n");
@@ -27,7 +26,6 @@ void    canvas::draw(String& page)
     //////////////////////////////////////////////////////////////////////////////////////
     page += F("function sx(x){return (x*w)/gw;}\n");
     page += F("function sy(y){return (y*h)/gh;}\n");
-
 
     page += F("var TriggerTemp=")+String(_trigger.t) + F(";\n");
     page += F("var TriggerHum=")+String(_trigger.h) + F(";\n");
@@ -69,16 +67,16 @@ void    canvas::draw(String& page)
               "  method: 'GET',\n"
               "  headers: {}\n"
               "};\n"
-              //  time,Temp,Hum,Relay
-              "fetch('/?fetch', options)\n"
+              //  time,Relay,Temp,Hum,
+              "fetch('/fetch', options)\n"
               "      .then(response => response.text())\n"
               "      .then(response => {\n"
               "         const svals   = response.split(\":\");\n"
-              "         if(svals.length==4){"
-              "             TimeNow = parseInt(svals[0])/")+String(TIME_STEP)+F(";\n");
-    page+=  F("             GraphTemp[time]=parseInt(svals[1]);\n"
-              "             GraphHum[time]=parseInt(svals[2]);\n"
-              "             Relay[time]=svals[3];\n"
+              "         if(svals.length>=4){"
+              "             TimeNow = parseInt(svals[0]/")+String(TIME_STEP)+F(");\n");
+    page+=  F("             Relay[TimeNow]=parseInt(svals[1]);\n"
+              "             GraphTemp[TimeNow]=parseInt(svals[2]);\n"
+              "             GraphHum[TimeNow]=parseInt(svals[3]);\n"
               "             draw();\n"
               "         };\n"
               "  });\n"
@@ -87,7 +85,7 @@ void    canvas::draw(String& page)
 
     page += F("draw();\n");
     page += F("update();\n");
-    page += F("\nfunction on_click(event){if(Scale==0)Scale=3;else Scale=0; update();} ");
+    page += F("\nfunction on_click(event){;}");
 
     ////////////////////////////////////////////////////////////////////////////////////
     page += F("\nfunction draw()\n{\n");
@@ -99,12 +97,6 @@ void    canvas::draw(String& page)
     page += F("ctx.resetTransform();\n");
     page += F("ctx.scale(1, -1);\n");
     page += F("ctx.translate(0,-h);\n");
-
-    page += F("if(Scale){;\n");
-    page += F("     const left = TimeNow > (Scale*12) ? (TimeNow-(Scale*12)) : 0;\n");
-    page += F("     ctx.scale(Scale ,1);\n");
-    page += F("     ctx.translate(sx(-left),1);\n");
-    page += F("};\n");
 
     // hours and units
     page += F("ctx.beginPath();\n");
@@ -146,7 +138,7 @@ void    canvas::draw(String& page)
         page += F("ctx.strokeStyle = \"#FAA\";\n");
         page += F("var xo=0;\n");
         page += F("var yo=sy(GraphTemp[0]);\n");
-        page += F("for(var x=1; x < sx(GraphTemp.length); x++)\n");
+        page += F("for(var x=1; x < GraphTemp.length-1; x++)\n");
         page += F("{\n");
         page += F("    ctx.moveTo(sx(xo), sy(yo));\n");
         page += F("    ctx.lineTo(sx(x), sy(GraphTemp[x]));\n");
@@ -159,12 +151,28 @@ void    canvas::draw(String& page)
         page += F("ctx.strokeStyle = \"#AAF\";\n");
         page += F("var xo=0;\n");
         page += F("var yo=sy(GraphHum[0]);\n");
-        page += F("for(var x=1; x < sx(GraphHum.length); x++)\n");
+        page += F("for(var x=1; x < GraphHum.length-1; x++)\n");
         page += F("{\n");
         page += F("    ctx.moveTo(sx(xo), sy(yo));\n");
         page += F("    ctx.lineTo(sx(x), sy(GraphHum[x]));\n");
         page += F("    xo=x;\n");
         page += F("    yo=GraphHum[x];\n");
+        page += F("}\n");
+        page += F("ctx.stroke();\n");
+
+//relay
+        page += F("ctx.beginPath();\n");
+        page += F("ctx.strokeStyle = \"#FFF\";\n");
+        page += F("var xo=0;\n");
+        page += F("var yo=sy(Relay[0]);\n");
+        page += F("var yi=sy(Relay[1]);\n");
+        page += F("for(var x=1; x < Relay.length-1; x++)\n");
+        page += F("{\n");
+        page += F("    ctx.moveTo(sx(xo), yo ? sy(h/10) : 0);\n");
+        page += F("    ctx.lineTo(sx(x), yi ? sy(h/10) : 0);\n");
+        page += F("    xo=x;\n");
+        page += F("    yo=Relay[x];\n");
+        page += F("    yi=Relay[x+1];\n");
         page += F("}\n");
         page += F("ctx.stroke();\n");
 
@@ -202,6 +210,5 @@ void    canvas::draw(String& page)
 
     page += F("</script>\n\n");
 
-
-
 }
+#endif

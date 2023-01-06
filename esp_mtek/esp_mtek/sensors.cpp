@@ -1,7 +1,9 @@
+
 #include "sensors.h"
 #include "wirewire.h"
 #include "sens_sht21.h"
 #include "sens_aht20.h"
+#if I2C_SDA
 
 void sensors_t::begin(int a, int c)
 {
@@ -39,3 +41,5 @@ void sensors_t::loop()
         _sensors[i]->loop();
     }
 }
+
+#endif //#if I2C_SDA
