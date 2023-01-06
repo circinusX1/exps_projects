@@ -36,7 +36,7 @@ void espxxsrv_t::handleConfig()
     page += F("<li>keepsta      <input type='text' name='keepsta' value='")+ _S(CFG(keepsta)) + F("' >");
     page += F("<li>temptrig     <input type='text' name='temptrig' value='")+ _S(CFG(temptrig)) + F("' >");
     page += F("<li>humtrig      <input type='text' name='humtrig' value='")+ _S(CFG(humtrig)) + F("' >");
-    page += F("<li>trigger rule <input type='select' name='triggerrule'>");
+    page += F("<li>trigger rule <select name='triggerrule'>");
     page += F("<option value=1>Temp above and Humidity above</option>");
     page += F("<option value=2>Temp above and Humidity below</option>");
     page += F("<option value=3>Temp below and Humidity above</option>");
@@ -45,7 +45,7 @@ void espxxsrv_t::handleConfig()
     page += F("<option value=6>Temp above OR Humidity below</option>");
     page += F("<option value=7>Temp below OR Humidity above</option>");
     page += F("<option value=8>Temp below OR Humidity below</option>");
-    page += F("</input>");
+    page += F("</select>");
     page += F("<li>h_host       <input type='text' name='h_host ' value='")+ _S(CFG(h_host)) + F("' >");
     page += F("<li>h_put        <input type='text' name='h_put ' value='")+ _S(CFG(h_put)) + F("' >");
     page += F("<li>h_get        <input type='text' name='h_get ' value='")+ _S(CFG(h_get)) + F("' >");
