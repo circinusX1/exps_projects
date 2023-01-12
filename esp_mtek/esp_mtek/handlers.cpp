@@ -67,7 +67,7 @@ void espxxsrv_t::handleConfig()
     page += F("<li>ssid         <input type='text' name='ssid ' value='")+ _S(CFG(ssid)) + F("' >");
     page += F("<li>passwd       <input type='passw name='passwdord' value='")+ _S(CFG(passwd)) + F("' >");
     page += F("<li>minitek      <input type='text' name='minitek ' value='")+_S(CFG(minitek)) + F("' >");
-    page += F("<li>             <input type='submi name='apply' value='Apply'/></form>");
+    page += F("<li>             <input type='submit name='apply' value='Apply'/></form>");
     page += espxxsrv_t::end_htm();
     espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
 }

@@ -1,0 +1,6 @@
+.
+libraries/Ticker/src
+libraries/WebOTA
+libraries/WebOTA/src
+libraries/ESPAsyncWebSrv/src
+../../../../../BOARDS/ESP/Esp8266-Arduino-Makefile

@@ -36,7 +36,7 @@
 #   define RELAY            14   // D5
 #   define BUTTON           0
 #   define WITH_GRAPH       1
-#   define WITH_NTP         1
+#   define WITH_NTP         0
 #   define  BUTTON_DOWN     0
 #   define  BUTTON_UP       1
 #   define  LED_ON          1

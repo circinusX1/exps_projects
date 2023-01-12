@@ -1,0 +1,7 @@
+../../../../../BOARDS/ESP/Esp8266-Arduino-Makefile/espXArduino.mk
+ESP_NOW.ino
+flash.sh
+Makefile
+make.sh
+md5.cpp
+md5.h
