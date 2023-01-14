@@ -14,11 +14,13 @@ extern "C" {
 #include "user_interface.h"
 }
 #endif
+#include <Wire.h>
+#include <SoftwareSerial.h>
 
 // Set up output serial port (could be a SoftwareSerial
 // if really wanted).
 
-Stream& ehConsolePort(Serial);
+//void ehSerial(Serial);
 
 // Wired to the blue LED on an ESP-01 board, active LOW.
 //
@@ -69,41 +71,41 @@ const char* const EVENT_REASONS[]{
 
 const char* const EVENT_REASONS_200[]{ "REASON_BEACON_TIMEOUT", "REASON_NO_AP_FOUND" };
 
-void print_system_info(Stream& consolePort)
+void print_system_info()
  {
   const rst_info* resetInfo = system_get_rst_info();
-  consolePort.print(F("system_get_rst_info() reset reason: "));
-  consolePort.println(RST_REASONS[resetInfo->reason]);
+  Serial.print(F("system_get_rst_info() reset reason: "));
+  Serial.println(RST_REASONS[resetInfo->reason]);
 
-  consolePort.print(F("system_get_free_heap_size(): "));
-  consolePort.println(system_get_free_heap_size());
+  Serial.print(F("system_get_free_heap_size(): "));
+  Serial.println(system_get_free_heap_size());
 
-  consolePort.print(F("system_get_os_print(): "));
-  consolePort.println(system_get_os_print());
+  Serial.print(F("system_get_os_print(): "));
+  Serial.println(system_get_os_print());
   system_set_os_print(1);
-  consolePort.print(F("system_get_os_print(): "));
-  consolePort.println(system_get_os_print());
+  Serial.print(F("system_get_os_print(): "));
+  Serial.println(system_get_os_print());
 
   system_print_meminfo();
 
-  consolePort.print(F("system_get_chip_id(): 0x"));
-  consolePort.println(system_get_chip_id(), HEX);
+  Serial.print(F("system_get_chip_id(): 0x"));
+  Serial.println(system_get_chip_id(), HEX);
 
-  consolePort.print(F("system_get_sdk_version(): "));
-  consolePort.println(system_get_sdk_version());
+  Serial.print(F("system_get_sdk_version(): "));
+  Serial.println(system_get_sdk_version());
 
-  consolePort.print(F("system_get_boot_version(): "));
-  consolePort.println(system_get_boot_version());
+  Serial.print(F("system_get_boot_version(): "));
+  Serial.println(system_get_boot_version());
 
-  consolePort.print(F("system_get_userbin_addr(): 0x"));
-  consolePort.println(system_get_userbin_addr(), HEX);
+  Serial.print(F("system_get_userbin_addr(): 0x"));
+  Serial.println(system_get_userbin_addr(), HEX);
 
-  consolePort.print(F("system_get_boot_mode(): "));
-  consolePort.println(system_get_boot_mode() == 0 ? F("SYS_BOOT_ENHANCE_MODE") : F("SYS_BOOT_NORMAL_MODE"));
+  Serial.print(F("system_get_boot_mode(): "));
+  Serial.println(system_get_boot_mode() == 0 ? F("SYS_BOOT_ENHANCE_MODE") : F("SYS_BOOT_NORMAL_MODE"));
 
-  consolePort.print(F("system_get_cpu_freq(): "));
-  consolePort.println(system_get_cpu_freq());
+  Serial.print(F("system_get_cpu_freq(): "));
+  Serial.println(system_get_cpu_freq());
 
-  consolePort.print(F("system_get_flash_size_map(): "));
-  consolePort.println(FLASH_SIZE_MAP_NAMES[system_get_flash_size_map()]);
+  Serial.print(F("system_get_flash_size_map(): "));
+  Serial.println(FLASH_SIZE_MAP_NAMES[system_get_flash_size_map()]);
 }

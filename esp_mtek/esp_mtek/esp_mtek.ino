@@ -12,7 +12,7 @@ public:
 
     void begin(){
         app_t::begin();
-        ::print_system_info(Serial);
+        ::print_system_info();
     }
 
     void loop(){

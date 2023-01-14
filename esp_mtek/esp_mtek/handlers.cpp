@@ -37,6 +37,7 @@ void espxxsrv_t::handleConfig()
     page += F("<li>temptrig     <input type='text' name='temptrig' value='")+ _S(CFG(temptrig)) + F("' >");
     page += F("<li>humtrig      <input type='text' name='humtrig' value='")+ _S(CFG(humtrig)) + F("' >");
     page += F("<li>trigger rule <select name='triggerrule'>");
+    page += F("<option value=0>Disabled (Monitor only)</option>");
     page += F("<option value=1>Temp above and Humidity above</option>");
     page += F("<option value=2>Temp above and Humidity below</option>");
     page += F("<option value=3>Temp below and Humidity above</option>");
@@ -46,6 +47,7 @@ void espxxsrv_t::handleConfig()
     page += F("<option value=7>Temp below OR Humidity above</option>");
     page += F("<option value=8>Temp below OR Humidity below</option>");
     page += F("</select>");
+/*
     page += F("<li>h_host       <input type='text' name='h_host ' value='")+ _S(CFG(h_host)) + F("' >");
     page += F("<li>h_put        <input type='text' name='h_put ' value='")+ _S(CFG(h_put)) + F("' >");
     page += F("<li>h_get        <input type='text' name='h_get ' value='")+ _S(CFG(h_get)) + F("' >");
@@ -67,6 +69,7 @@ void espxxsrv_t::handleConfig()
     page += F("<li>ssid         <input type='text' name='ssid ' value='")+ _S(CFG(ssid)) + F("' >");
     page += F("<li>passwd       <input type='passw name='passwdord' value='")+ _S(CFG(passwd)) + F("' >");
     page += F("<li>minitek      <input type='text' name='minitek ' value='")+_S(CFG(minitek)) + F("' >");
+*/
     page += F("<li>             <input type='submit name='apply' value='Apply'/></form>");
     page += espxxsrv_t::end_htm();
     espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);

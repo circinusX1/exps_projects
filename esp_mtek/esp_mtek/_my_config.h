@@ -14,8 +14,8 @@
 #define   MAX_PROGRAM_SZ    480000
 #define   SERIAL_BPS        115200
 
-//#define MY_BOARD            MY_BOARD_RELAY
-#define MY_BOARD            ESP_8266_GENERIC
+#define MY_BOARD            MY_BOARD_RELAY
+//#define MY_BOARD            ESP_8266_GENERIC
 //#define MY_BOARD            ESP_WITH_RELAY_7_30V
 //#define MY_BOARD            GLOBE_SMART_PLUG
 //#define MY_BOARD            ESP_WROOM
@@ -78,19 +78,19 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 #elif MY_BOARD==MY_BOARD_RELAY
 #   define  MAX_PROGRAM_SZ  0
-#   define I2C_SDA          0
-#   define I2C_SCL          0
-#   define LED              4
-#   define RELAY            14          // relay on D5
+#   define I2C_SDA          12
+#   define I2C_SCL          13
+#   define LED              2
+#   define RELAY            4          // relay on D5
 #   define BUTTON           0
-#   define WITH_GRAPH       0
-#   define WITH_NTP         0
+#   define WITH_GRAPH       1
+#   define WITH_NTP         1
 #   define BUTTON_DOWN      0
 #   define BUTTON_UP        1
 #   define LED_ON           0
 #   define LED_OFF          1
-#   define RELAY_ON         1
-#   define RELAY_OFF        0
+#   define RELAY_ON         0
+#   define RELAY_OFF        1
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////

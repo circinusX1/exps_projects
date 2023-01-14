@@ -3,6 +3,6 @@
 
 #include "_my_config.h"
 
-void print_system_info(Stream& consolePort);
+void print_system_info();
 
 #endif // SYSTEMINFO_H

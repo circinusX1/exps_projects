@@ -2,6 +2,7 @@
 #include "sensors.h"
 #include "wirewire.h"
 #include "sens_sht21.h"
+#include "sens_sht3x.h"
 #include "sens_aht20.h"
 #if I2C_SDA
 
@@ -18,6 +19,8 @@ void sensors_t::begin(int a, int c)
             _sensors[i] = new sens_aht20(i, ads[i]);
         else if(ads[i]==0x40)
             _sensors[i] = new sens_sht21(i, ads[i]);
+        else if(ads[i]==0x44)
+            _sensors[i] = new sens_sht3x(i, ads[i]);
     }
     for(int i=0; _sensors[i];i++)
     {
