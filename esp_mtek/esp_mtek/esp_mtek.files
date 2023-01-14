@@ -25,6 +25,8 @@ sens_aht20.cpp
 sens_aht20.h
 sens_sht21.cpp
 sens_sht21.h
+sens_sht3x.cpp
+sens_sht3x.h
 sensors.cpp
 sensors.h
 systeminfo.cpp

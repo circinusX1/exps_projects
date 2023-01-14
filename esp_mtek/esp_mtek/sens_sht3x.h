@@ -1,7 +1,7 @@
 #ifndef SENS_SHT31_H
 #define SENS_SHT31_H
 
-#include "SHT3x.h"
+#include "DFRobot_SHT3x.h"
 #include "sensors.h"
 #if I2C_SDA
 
@@ -19,7 +19,7 @@ public:
     const char* name()const{return "SHT21";}
 
 protected:
-    SHT3x*   _sht = nullptr; // = new AHT10(addr);
+    DFRobot_SHT3x*   _sht = nullptr; // = new AHT10(addr);
     th_t     _range[2] = {{-40.0f,120.0f},{0.0f,100.0f}};
     th_t     _data;
 };
