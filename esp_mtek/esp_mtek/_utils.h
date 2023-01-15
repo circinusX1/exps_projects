@@ -18,7 +18,7 @@
 #define RAMSIG          0x21
 #define BOGUS_VAL       999999.99
 #define MKVER(a,b,c)    a<<16|b<<8|c
-
+#define DEBUG   1
 //////////////////////////////////////////////////////////////////////////////////////////
 #if DEBUG
 #   define TRACE()         Serial.print(__FUNCTION__); Serial.println(__LINE__);

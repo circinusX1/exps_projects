@@ -2,8 +2,7 @@
 #include "eeprom.h"
 #include "application.h"
 #include "espxxsrv.h"
-
-
+#include "css.h"
 
 
 bool espxxsrv_t::_capturePage()
@@ -31,8 +30,8 @@ void espxxsrv_t::handleConfig()
 
     page += F("<form method='POST' action='configsave'><h4>DEVICE CONFIG</h4>");
 
-    page += F("<li>schedule     <input type='text' name='schedule' value='")+ _S(CFG(schedule)) + F("' >");
-    page += F("<li>autoenabled  <input type='text' name='autoenabled' value='")+ _S(CFG(autoenabled)) + F("' >");
+    //page += F("<li>schedule     <input type='text' name='schedule' value='")+ _S(CFG(schedule)) + F("' >");
+    //page += F("<li>autoenabled  <input type='text' name='autoenabled' value='")+ _S(CFG(autoenabled)) + F("' >");
     page += F("<li>keepsta      <input type='text' name='keepsta' value='")+ _S(CFG(keepsta)) + F("' >");
     page += F("<li>temptrig     <input type='text' name='temptrig' value='")+ _S(CFG(temptrig)) + F("' >");
     page += F("<li>humtrig      <input type='text' name='humtrig' value='")+ _S(CFG(humtrig)) + F("' >");
@@ -71,18 +70,36 @@ void espxxsrv_t::handleConfig()
     page += F("<li>minitek      <input type='text' name='minitek ' value='")+_S(CFG(minitek)) + F("' >");
 */
     page += F("<li>             <input type='submit name='apply' value='Apply'/></form>");
-    page += espxxsrv_t::end_htm();
-    espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
+    espxxsrv_t::end_htm(page);
+    //espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 void espxxsrv_t::handleConfigSave()
 {
-    String page;
+    eeprom_t e(1);
+
+    char keepsta[16];
+    char temptrig[16];
+    char humtrig[16];
+    char triggerrule[16];
+
+    espxxsrv_t::WifiSrv->_esp.arg("keepsta").toCharArray(keepsta, sizeof(keepsta) - 1);
+    espxxsrv_t::WifiSrv->_esp.arg("temptrig").toCharArray(temptrig, sizeof(temptrig) - 1);
+    espxxsrv_t::WifiSrv->_esp.arg("humtrig").toCharArray(humtrig, sizeof(humtrig) - 1);
+    espxxsrv_t::WifiSrv->_esp.arg("triggerrule").toCharArray(triggerrule, sizeof(triggerrule) - 1);
+
+    CFG(keepsta)=::atoi(keepsta);
+    CFG(temptrig)=::atoi(temptrig);
+    CFG(humtrig)=::atoi(humtrig);
+    CFG(trigger_rule)=(char)::atoi(triggerrule);
 
 
+    e.save();
+    delay(200);
+    e.load();
+    ESP.restart();
 
-    espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -123,8 +140,8 @@ void espxxsrv_t::handleOta()
             "const form = document.getElementById('form');\n"
             "form.addEventListener('submit', ls);\n"
             "</script>\n";
-    page+=espxxsrv_t::WifiSrv->end_htm();
-    espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
+    espxxsrv_t::WifiSrv->end_htm(page);
+    //espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -182,9 +199,9 @@ void espxxsrv_t::handleWifi()
                 "<br /><input type='text' placeholder='GATEWAY: 192.168.1.1' name='i'/>"
                 "<br /><input type='text' placeholder='Time Zone in hours' name='z'/>"
                 "<br /><input type='submit' value='Apply'/></form>");
-    page += espxxsrv_t::WifiSrv->end_htm();
+    espxxsrv_t::WifiSrv->end_htm(page);
 
-    espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
+    // espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
     espxxsrv_t::WifiSrv->_esp.client().stop(); // Stop is needed because we sent no content length
 }
 
@@ -223,8 +240,8 @@ void espxxsrv_t::handleWifiSave()
 
     page += F("<li>Wait 30 seconds, join your router and click ");
     page += F("<a href='http://") + String(e->ip) + F("'>MINITK</a>");
-    page += espxxsrv_t::end_htm();
-    espxxsrv_t::WifiSrv->_esp.send(200, F("text/html"), page);
+    espxxsrv_t::end_htm(page);
+    //espxxsrv_t::WifiSrv->_esp.send(200, F("text/html"), page);
     espxxsrv_t::WifiSrv->_esp.client().stop(); // Stop is needed because we sent no content length
     ESP.restart();
 }
@@ -241,9 +258,17 @@ void espxxsrv_t::handleRoot()
     espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
 }
 
-const String espxxsrv_t::end_htm()
+void espxxsrv_t::end_htm(String & page)
 {
-    return F("</div></body></html>");
+    TRACE();
+    page += F("</div></body></html>");
+    espxxsrv_t::WifiSrv->_esp.send(200, "text/html", page);
+    TRACE();
+}
+
+void espxxsrv_t::handleCss()
+{
+    espxxsrv_t::WifiSrv->_esp.send(200, "text/css", get_css());
 }
 
 const String& espxxsrv_t::start_htm(bool content)
@@ -251,33 +276,23 @@ const String& espxxsrv_t::start_htm(bool content)
     static String ret;
 
     ret = "";
-    espxxsrv_t::WifiSrv->_esp.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    espxxsrv_t::WifiSrv->_esp.sendHeader("Pragma", "no-cache");
-    espxxsrv_t::WifiSrv->_esp.sendHeader("Expires", "-1");
+    //espxxsrv_t::WifiSrv->_esp.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    //espxxsrv_t::WifiSrv->_esp.sendHeader("Pragma", "no-cache");
+    //espxxsrv_t::WifiSrv->_esp.sendHeader("Expires", "-1");
     if(content)
     {
         ret = F("<!DOCTYPE html><html lang='en'>\n<head>\n"
                 "<meta name='viewport' content='width=device-width'>\n"
-                "<style>.cent{ margin: auto;"
-                "width: 96%; text-align:center;font-size:1em;"
-                "border: 3px solid red; background:#DDF;"
-                "padding: 6px;margin-top:80px;}"
-                "table{ border: 1px solid; width:100%;}"
-                ".menu{text-align:center; fint-size:1.5em; color:#522; "
-                "background-color: #c0c0e0; position:fixed; top:0; width:100%; z-index:100;}"
-                "button,input[type='submit']{background-color:#8EF;color:black;width:160px;height:40px;}"
-                ".but{display:inline-flex;padding-top:9px;background-color:#8EF;color:black;width:160px;height:28px;}"
-                "input[type='file']{background-color:#8EF;color:black;width:160px;height:60px;display:none}"
-                "</style>\n"
                 "<title>MARIUTEK</title></head>\n<body>\n"
-                "<div class='menu'><div align='left'>")+
+                "<link rel='stylesheet' type='text/css' href='/css'>\n"
+                "<div class='menu'><div align='left'>\n")+
                 String(BTIME)+
-                F("</div><a href='/'><button>MAIN PAGE</button></a>"
-                  "<a href='/ota'><button>UPDATE</button></a> "
-                  "<a href='/wifi'><button>WIFI CONFIG</button></a>"
-                  "<a href='/config'><button>CONFIG</button></a> "
-                  "</div>"
-                  "<div class='cent'>\n");
+                F("</div><a href='/'><button>MAIN PAGE</button></a>\n"
+                  "<a href='/ota'><button>UPDATE</button></a>\n"
+                  "<a href='/wifi'><button>WIFI CONFIG</button></a>\n"
+                  "<a href='/config'><button>CONFIG</button></a>\n"
+                  "</div>\n"
+                  "<div class='container'>\n");
     }
     return ret;
 }

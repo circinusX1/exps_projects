@@ -24,12 +24,13 @@ public:
     bool is_otaing()const{return _otaing;}
     void on_relay_event(const sensdata_t* );
     void on_sensor_event(const sensor_th_t* );
-    static const String end_htm();
+    static void  end_htm(String& page);
     static const String& start_htm(bool content=true);
     bool  sta_connected(){return _sta && _sta_lost==0;}
     bool  ap_active(){return _ap;}
 private:
     static void handleUser();
+    static void handleCss();
     static void handleRoot();
     static void handleWifi();
     static void handleOta();

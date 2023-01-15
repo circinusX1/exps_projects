@@ -21,7 +21,7 @@ public:
 
     void http_get(ESP8266WebServer* srv, String& page)
     {
-        page +=  espxxsrv_t::start_htm();
+        page = espxxsrv_t::start_htm();
 
         const String& uri = srv->uri();
         LOG(uri.c_str());
@@ -137,8 +137,7 @@ public:
 
 DONE:
         _draw_canvas(page);
-
-        page +=  espxxsrv_t::end_htm();
+        espxxsrv_t::end_htm(page);
 
     }
 

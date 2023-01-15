@@ -30,6 +30,7 @@ espxxsrv_t::espxxsrv_t():_esp(80)
     _esp.on("/index.html", espxxsrv_t::handleRoot);
     _esp.on("/fetch", espxxsrv_t::handleFetch);
     _esp.on("/wifi", espxxsrv_t::handleWifi);
+    _esp.on("/css", espxxsrv_t::handleCss);
     _esp.on("/error", espxxsrv_t::handleError);
     _esp.on("/wifisave", espxxsrv_t::handleWifiSave);
     _esp.on("/config", espxxsrv_t::handleConfig);
@@ -410,7 +411,8 @@ void espxxsrv_t::on_sensor_event(const sensor_th_t* sensor)
 void espxxsrv_t::_handleFetch()
 {
 #if I2C_SDA
-    String page=espxxsrv_t::start_htm(false);
+    espxxsrv_t::start_htm(false);
+    String page;
     page += String( Sclk.minutes())+":";
     page += String(app_t::TheApp->get_relay())+":";
     const sensors_t& ss =  app_t::TheApp->sensors();
