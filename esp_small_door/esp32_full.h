@@ -2,7 +2,8 @@
 #define AP_WIFI_OTA
 
 #include "_config.h"
-#include <ESP8266WiFi.h>
+#include "time.h"
+  #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
@@ -22,7 +23,7 @@ struct RAMM{
 extern RAMM __Ramm; // __attribute__ ((section (".noinit")));
 
 #define SAMPLES_MAX  2880
-#define SIG  0x58
+#define SIG  0x60
 
 struct Temps
 {
@@ -42,12 +43,17 @@ public:
     virtual void  user_loop(unsigned int) = 0;
     virtual void  page_request(ESP8266WebServer* srv,
                                String& page)=0;
-
+    int getOnTime()const{return _eprom._ontimemin;}
+    int getOffTime()const{return _eprom._offtimemin;}
+    const char* getNTPSrv()const{return _eprom._ntpsrv;}
+    
 public:
     static void handleRoot();
     static void handleWifi();
     static void handleWifiSave();
     static void handleNotFound();
+    static void handleOnOff();
+    static void handleOnOffSave();
     static void handleOta();
     static void IRAM_ATTR delayMicroseconds2(uint32_t us);
 protected:
@@ -69,10 +75,15 @@ protected:
     boolean              _b_conn2wifi = false;
     boolean              _bsta = false;
     struct {
-    byte                   sig;
-    char                 _cur_ssid_name[32]; // = "marius";
-    char                 _cur_ssid_pswd[32]; // = "myssidpass";
-    char                 _ipstatic[32];
+        byte                   sig;
+        char                 _cur_ssid_name[32]; // = "marius";
+        char                 _cur_ssid_pswd[32]; // = "myssidpass";
+        char                 _ipstatic[32];
+        char                 _ntpsrv[32] = "ca.pool.ntp.org";
+        int                  _ontimemin=0;
+        int                  _offtimemin=0;
+        int                  _timezone=-5;
+    
     } _eprom;
 
     unsigned long       _last_conn = 0;

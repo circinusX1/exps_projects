@@ -3,9 +3,9 @@
 #define CONFIGH
 
 
-#define EZVIZ_T30  0
+#define EZVIZ_T30  1
 #define EIGHT_TREE 0
-#define ESP_01     1
+#define ESP_01     0
 
 #if  GLOBE_PLUG
   #define   LED      4

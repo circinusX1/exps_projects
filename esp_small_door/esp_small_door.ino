@@ -2,6 +2,19 @@
 
 #include "esp32_full.h"
 #include <Wire.h>
+#include <DateTimeTZ.h>
+#include <TimeElapsed.h>
+#include <ESPDateTime.h>
+#include <DateTime.h>
+
+#define VERSION "1.0.1"
+
+/////////////////////////////////////////////////////
+/////////////////   ESP8266 relay ON OFF ////////////
+
+// ca.pool.ntp.org / pool.ntp.org
+// board generic ESP8266 module
+static uint32_t CurMs = 0;
 
 class MyEsp : public esp32_full
 {
@@ -85,15 +98,48 @@ public:
             }
         }
         page += "<font size='4em'>";
+        page += VERSION;
         page += "<li><a href='?relay=1'>TURN ON</a>";
         page += "<li><a href='?relay=0'>TURN OFF</a>";
         page += "<li>LED:" + String(LED);
         page += "<li>RELAY:" + String(RELAY);
         page += "<li>BUTTON:" + String(_btgpio) + " = " + (get_button_state());
+        
         if(__Ramm.relay_state==LOW)
             page += "<li> LED OFF";
         else
             page += "<li> LED ON";
+        if(DateTime.isTimeValid())
+        {
+           page += "<li>"; 
+           page += DateTime.toString();
+        }
+        else
+        {
+           page += "<li>Cannot get NTP"; 
+           DateTime.begin();
+        }
+        if(getOnTime())
+        {
+            page += "<li>Time zone:";
+            page += DateTime.getTimeZone();
+            page += "<li> On time ";
+            page += getOnTime()/60;
+            page += ":";
+            page += getOnTime()%60;
+            
+            page += "<li> Off time ";
+            page += getOffTime()/60;
+            page += ":";
+            page += getOffTime()%60;
+            
+            DateTimeParts p = DateTime.getParts();
+            page += "<li> H:M ";
+            page += p.getHours();
+            page += ":";
+            page += p.getMinutes();
+        }
+        
         page+="</font>";
         page +=  _end_html();
     }
@@ -137,10 +183,74 @@ void setup() {
     if(BUTTON)pinMode(BUTTON, INPUT);
     if(RELAY)digitalWrite(RELAY, __Ramm.relay_state);
     TheEsp._button = TheEsp.get_button_state()==LOW ? -1 : 0;
+    
+    DateTime.setServer("ca.pool.ntp.org");
+    DateTime.setTimeZone("CST-5");
+    DateTime.begin();
+    if (!DateTime.isTimeValid()) {
+      Serial.println("Failed to get time from server.");
+    } else {
+      Serial.printf("Date Now is %s\n", DateTime.toISOString().c_str());
+      Serial.printf("Timestamp is %ld\n", DateTime.now());
+    }
     Serial.println("exiting setup3");
+    CurMs = millis();
 }
+
 
 void loop() {
 
+    if(TheEsp.getOnTime())
+    {
+        uint32_t diff = 0;
+        uint32_t curt = millis();
+        if(curt > CurMs )
+        {
+            diff = curt-CurMs;
+        }
+        else
+        {
+            diff - 0xFFFFFFFF-CurMs + curt;
+        }
+        if(diff > (5 * 60 * 1000))           // every 5 min 
+        {
+            CurMs = curt;
+            if(DateTime.isTimeValid())
+            {
+                 DateTimeParts p = DateTime.getParts();
+                 int curminday = p.getHours()*60 + p.getMinutes();
+                 
+                 if(curminday > TheEsp.getOnTime() && 
+                    curminday < TheEsp.getOffTime())
+                    {
+                        TheEsp.set_relay(true);
+                    }
+                    else
+                    {
+                        TheEsp.set_relay(false);
+                    }
+            }
+            else
+            {
+                DateTime.begin();
+                delay(1000);
+                if(DateTime.isTimeValid())
+                {
+                     DateTimeParts p = DateTime.getParts();
+                     int curminday = p.getHours()*60 + p.getMinutes();
+                     if(curminday > TheEsp.getOnTime() && 
+                        curminday < TheEsp.getOffTime())
+                        {
+                            TheEsp.set_relay(true);
+                        }
+                        else
+                        {
+                            TheEsp.set_relay(false);
+                        }
+                }                
+                
+            }
+        }
+    }
     TheEsp.loop();
 }

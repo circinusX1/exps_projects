@@ -1,4 +1,6 @@
 
+
+
 #include "esp32_full.h"
 
 const char*     AP_SSID_NAME = "door";
@@ -56,14 +58,16 @@ bool    esp32_full::setup()
     ESP_S()->on("/index.html", esp32_full::handleRoot);
     ESP_S()->on("/wifi", esp32_full::handleWifi);
     ESP_S()->on("/ota", esp32_full::handleOta);
+    ESP_S()->on("/onoff", esp32_full::handleOnOff);
     ESP_S()->on("/wifisave", esp32_full::handleWifiSave);
+    ESP_S()->on("/onoffsave", esp32_full::handleOnOffSave);
     ESP_S()->on("/generate_204", esp32_full::handleRoot);   //  Android captive portal. Maybe not needed. Might be handled by notFound handler.
     ESP_S()->on("/fwlink", esp32_full::handleRoot);         //  Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
     ESP_S()->onNotFound(esp32_full::handleNotFound);
     ESP_S()->on("/fileup", HTTP_POST, []() {
         ////TRACE();
         ESP_S()->sendHeader("Connection", "close");
-        ESP_S()->send(200, "text/plain", (Update.hasError()) ? "FAIL" : "<a href='/'>FLASH OK HOME</a>");
+        ESP_S()->send(200, "text/html", (Update.hasError()) ? "FAIL" : "<a href='/'>FLASH OK HOME</a>");
         ////TRACE();
         delay(1000);
         ESP.restart();
@@ -355,6 +359,7 @@ const __FlashStringHelper * esp32_full::_start_html(int width)
              "<button><a href='/'>HOME PAGE</a></button>"
              "<button><a href='/ota'>UPDATE</a> </button>"
              "<button><a href='/wifi'>WIFI CONFIG</a> </button>"
+             "<button><a href='/onoff'>ONOFF CONFIG</a> </button>"
              "</div>"
              "<div class='cent'>\n");
 }
@@ -407,7 +412,7 @@ void esp32_full::handleWifi()
     }
     Page += F(
                 "</table>"
-                "\r\n<br /><form method='POST' action='wifisave'><h4>Connect to network:</h4>"
+                "<form method='POST' id='form' name='form' action='/wifisave'>"
                 "<input type='text' placeholder='SSID' name='n'/>"
                 "<br /><input type='password' placeholder='PASSWORD' name='p'/>"
                 "<br /><input type='text' placeholder='192.168.X.XXX' name='i'/>"
@@ -429,7 +434,7 @@ void esp32_full::handleWifiSave()
     String page = This->_start_html();
     page += "SAVING & REBOOTING";
     page += This->_end_html();
-    ESP_S()->send(200, "text/plain", page);
+    ESP_S()->send(200, "text/html", page);
 
     ESP_S()->client().stop(); // Stop is needed because we sent no content length
     This->_saveCredentials();
@@ -437,6 +442,26 @@ void esp32_full::handleWifiSave()
     This->_b_conn2wifi = This->_eprom.sig==SIG; // Request WLAN _b_conn2wifi with new credentials if there is a SSID
 
 }
+
+void esp32_full::handleOnOffSave()
+{
+    This->_otaing=false;
+    Serial.println("onoff save");
+    This->_eprom._ontimemin = ESP_S()->arg("o").toInt();
+    This->_eprom._offtimemin = ESP_S()->arg("f").toInt();
+    This->_eprom._timezone = ESP_S()->arg("z").toInt();
+    ESP_S()->arg("n").toCharArray(This->_eprom._ntpsrv, sizeof(This->_eprom._ntpsrv) - 1);
+
+    String page = This->_start_html();
+    page += "SAVING & REBOOTING";
+    page += This->_end_html();
+    ESP_S()->send(200, "text/plain", page);
+
+    ESP_S()->client().stop();     // Stop is needed because we sent no content length
+    This->_saveCredentials();
+    REBOOT();
+}
+
 
 void esp32_full::handleNotFound()
 {
@@ -470,10 +495,6 @@ void esp32_full::handleRoot()
     if (This->_captivePortal())
     {
         return;
-    }
-    if(This->_bsta)
-    {
-        esp32_full::handleWifi();
     }
     else
     {
@@ -510,3 +531,20 @@ void esp32_full::handleOta()
     ESP_S()->send(200, "text/html", page);
     This->_otaing=true;
 }
+
+void esp32_full::handleOnOff()
+{
+    String page = This->_start_html();
+    page += "<form method='POST' id='form' name='form' action='/onoffsave'>"
+            "<br>On time Minutes, 0 to control over http<input type='text' name='o' value='";
+    page +=  This->_eprom._ontimemin;       
+    page += "'><br>Off time<input type='text' name='f' value='";
+    page += This->_eprom._offtimemin;
+    page += "'><br>Time zone +/- Hours<input type='text' name='z' value='";
+    page += This->_eprom._timezone;
+    page += "'><br>NTP server<input type='text' name='n' value='";
+    page += This->_eprom._ntpsrv;
+    page += "'><br><input type='submit'  value='Save and reboot'></form>";
+    page+=This->_end_html();
+    ESP_S()->send(200, "text/html", page);
+ }
