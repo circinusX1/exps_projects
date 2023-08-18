@@ -184,14 +184,23 @@ void setup() {
     if(RELAY)digitalWrite(RELAY, __Ramm.relay_state);
     TheEsp._button = TheEsp.get_button_state()==LOW ? -1 : 0;
     
-    DateTime.setServer("ca.pool.ntp.org");
-    DateTime.setTimeZone("CST-5");
+    DateTime.setServer(TheEsp.getNTPSrv());
+    char cst[16];
+    if(TheEsp.getTz()<0)
+      ::sprintf(cst,"CST%d",TheEsp.getTz());
+    else  
+      ::sprintf(cst,"CST+%d",TheEsp.getTz());
+    DateTime.setTimeZone(cst);
     DateTime.begin();
+    
     if (!DateTime.isTimeValid()) {
       Serial.println("Failed to get time from server.");
+      delay(100);
+      DateTime.begin();
     } else {
       Serial.printf("Date Now is %s\n", DateTime.toISOString().c_str());
       Serial.printf("Timestamp is %ld\n", DateTime.now());
+      
     }
     Serial.println("exiting setup3");
     CurMs = millis();

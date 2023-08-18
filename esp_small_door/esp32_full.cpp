@@ -67,7 +67,7 @@ bool    esp32_full::setup()
     ESP_S()->on("/fileup", HTTP_POST, []() {
         ////TRACE();
         ESP_S()->sendHeader("Connection", "close");
-        ESP_S()->send(200, "text/html", (Update.hasError()) ? "FAIL" : "<a href='/'>FLASH OK HOME</a>");
+        ESP_S()->send(200, "text/html", (Update.hasError()) ? "FAIL" : "<a href='/'>FLASH OK, GOTO HOME</a>");
         ////TRACE();
         delay(1000);
         ESP.restart();
@@ -455,7 +455,8 @@ void esp32_full::handleOnOffSave()
     String page = This->_start_html();
     page += "SAVING & REBOOTING";
     page += This->_end_html();
-    ESP_S()->send(200, "text/plain", page);
+    
+    ESP_S()->send(200, "text/html", page);
 
     ESP_S()->client().stop();     // Stop is needed because we sent no content length
     This->_saveCredentials();
@@ -484,7 +485,7 @@ void esp32_full::handleNotFound()
     }
 
     message += This->_end_html();
-    ESP_S()->send(404, "text/plain", message);
+    ESP_S()->send(404, "text/html", message);
 
 }
 

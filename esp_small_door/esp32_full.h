@@ -44,6 +44,7 @@ public:
     virtual void  page_request(ESP8266WebServer* srv,
                                String& page)=0;
     int getOnTime()const{return _eprom._ontimemin;}
+    int getTz()const{return _eprom._timezone;}
     int getOffTime()const{return _eprom._offtimemin;}
     const char* getNTPSrv()const{return _eprom._ntpsrv;}
     
