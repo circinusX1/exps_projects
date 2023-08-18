@@ -67,7 +67,7 @@ bool    esp32_full::setup()
     ESP_S()->on("/fileup", HTTP_POST, []() {
         ////TRACE();
         ESP_S()->sendHeader("Connection", "close");
-        ESP_S()->send(200, "text/html", (Update.hasError()) ? "FAIL" : "<a href='/'>FLASH OK, GOTO HOME</a>");
+        ESP_S()->send(200, "text/html", (Update.hasError()) ? "FAIL" : "<a href='/'>FLASH OK, HOME IN 20 SECONDS</a>");
         ////TRACE();
         delay(1000);
         ESP.restart();
@@ -432,7 +432,7 @@ void esp32_full::handleWifiSave()
     ESP_S()->arg("i").toCharArray(This->_eprom._ipstatic, sizeof(This->_eprom._ipstatic) - 1);
 
     String page = This->_start_html();
-    page += "SAVING & REBOOTING";
+    page += "SAVING & REBOOTING. <a href='/'>HOME IN 30 SECONDS</a>";
     page += This->_end_html();
     ESP_S()->send(200, "text/html", page);
 

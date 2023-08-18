@@ -15,6 +15,7 @@
 // ca.pool.ntp.org / pool.ntp.org
 // board generic ESP8266 module
 static uint32_t CurMs = 0;
+static char     NtpOff[16];
 
 class MyEsp : public esp32_full
 {
@@ -122,7 +123,7 @@ public:
         if(getOnTime())
         {
             page += "<li>Time zone:";
-            page += DateTime.getTimeZone();
+            page += NtpOff;
             page += "<li> On time ";
             page += getOnTime()/60;
             page += ":";
@@ -185,12 +186,12 @@ void setup() {
     TheEsp._button = TheEsp.get_button_state()==LOW ? -1 : 0;
     
     DateTime.setServer(TheEsp.getNTPSrv());
-    char cst[16];
+
     if(TheEsp.getTz()<0)
-      ::sprintf(cst,"CST%d",TheEsp.getTz());
+      ::sprintf(NtpOff,"CST%d",TheEsp.getTz());
     else  
-      ::sprintf(cst,"CST+%d",TheEsp.getTz());
-    DateTime.setTimeZone(cst);
+      ::sprintf(NtpOff,"CST+%d",TheEsp.getTz());
+    DateTime.setTimeZone(NtpOff);
     DateTime.begin();
     
     if (!DateTime.isTimeValid()) {
